@@ -1,0 +1,71 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # Application logs
+  - job_name: application
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: be-law-api
+          log_type: application
+          __path__: /var/log/app/application-*.log
+
+  # Error logs
+  - job_name: errors
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: be-law-api
+          log_type: error
+          __path__: /var/log/app/error-*.log
+
+  # Security logs
+  - job_name: security
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: be-law-api
+          log_type: security
+          __path__: /var/log/app/security-*.log
+
+  # Audit logs
+  - job_name: audit
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: be-law-api
+          log_type: audit
+          __path__: /var/log/app/audit-*.log
+
+  # Access logs
+  - job_name: access
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: be-law-api
+          log_type: access
+          __path__: /var/log/app/access-*.log
+
+  # Database logs
+  - job_name: database
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: be-law-api
+          log_type: database
+          __path__: /var/log/app/database-*.log
+
