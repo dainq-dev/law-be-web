@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ServiceEntity, ServiceTranslationEntity } from '@shared/entities/service.entity';
-import { ProcessStepEntity } from '@shared/entities/process-step.entity';
 import { PaginationOptions } from '@shared/utilities/pagination';
 
 @Injectable()
@@ -10,8 +9,6 @@ export class ServicesRepository {
   constructor(
     @InjectRepository(ServiceEntity)
     private readonly serviceRepository: Repository<ServiceEntity>,
-    @InjectRepository(ProcessStepEntity)
-    private readonly processStepRepository: Repository<ProcessStepEntity>,
     @InjectRepository(ServiceTranslationEntity)
     private readonly translationRepository: Repository<ServiceTranslationEntity>,
   ) {}
@@ -35,7 +32,7 @@ export class ServicesRepository {
 
     const queryBuilder = this.serviceRepository
       .createQueryBuilder('service')
-      .leftJoinAndSelect('service.processSteps', 'processSteps')
+      .leftJoinAndSelect('service.translations', 'translations', 'translations.service_id = service.id')
       .skip(skip)
       .take(limit)
       .orderBy('service.sort_order', 'ASC')
@@ -49,9 +46,18 @@ export class ServicesRepository {
     }
 
     const [data, total] = await queryBuilder.getManyAndCount();
-
+    const result = data.map((item, index) => {
+      const { translations, __v, deleted_at, features, requirements, ...rest } = item;
+      const translationTransfer:any = translations.map(translation => ({
+        ...rest,
+        ...translation,
+        legal_fields: translation.legal_fields ? JSON.stringify(translation.legal_fields?.split(',')) : [],
+        group_index: index,
+      }));
+      return [...translationTransfer, {...rest, language_code: 'vi', group_index: index}];
+    }).flat();
     return {
-      data,
+      data: result,
       total,
       page,
       limit,
@@ -62,7 +68,7 @@ export class ServicesRepository {
   async findById(id: string): Promise<ServiceEntity | null> {
     return this.serviceRepository.findOne({
       where: { id },
-      relations: ['processSteps', 'translations', 'translations.language'],
+      relations: ['translations'],
     });
   }
 
@@ -79,63 +85,7 @@ export class ServicesRepository {
     await this.serviceRepository.delete(id);
   }
 
-  async findFeatured(): Promise<ServiceEntity[]> {
-    return this.serviceRepository.find({
-      where: {  is_active: true },
-      relations: ['company', 'processSteps'],
-      order: { sort_order: 'ASC' },
-    });
-  }
-
-  async findByTags(tags: string[]): Promise<ServiceEntity[]> {
-    return this.serviceRepository
-      .createQueryBuilder('service')
-      .leftJoinAndSelect('service.company', 'company')
-      .leftJoinAndSelect('service.processSteps', 'processSteps')
-      .where('service.tags && :tags', { tags })
-      .andWhere('service.is_active = :is_active', { is_active: true })
-      .orderBy('service.sort_order', 'ASC')
-      .getMany();
-  }
-
-  // Process Step methods
-  async createProcessStep(processStepData: Partial<ProcessStepEntity>): Promise<ProcessStepEntity> {
-    const processStep = this.processStepRepository.create(processStepData);
-    return this.processStepRepository.save(processStep);
-  }
-
-  async findProcessStepsByServiceId(serviceId: string): Promise<ProcessStepEntity[]> {
-    return this.processStepRepository.find({
-      where: { service: { id: serviceId } },
-      order: { step_number: 'ASC' },
-    });
-  }
-
-  async findProcessStepById(id: string): Promise<ProcessStepEntity | null> {
-    return this.processStepRepository.findOne({
-      where: { id },
-      relations: ['service'],
-    });
-  }
-
-  async updateProcessStep(id: string, processStepData: Partial<ProcessStepEntity>): Promise<ProcessStepEntity> {
-    await this.processStepRepository.update(id, processStepData);
-    const updated = await this.findProcessStepById(id);
-    if (!updated) {
-      throw new Error('Process step not found after update');
-    }
-    return updated;
-  }
-
-  async deleteProcessStep(id: string): Promise<void> {
-    await this.processStepRepository.delete(id);
-  }
-
-  async reorderProcessSteps(serviceId: string, stepOrders: { id: string; step_order: number }[]): Promise<void> {
-    for (const { id, step_order } of stepOrders) {
-      await this.processStepRepository.update(id, { step_number: step_order });
-    }
-  }
+  // Removed featured and tags methods as they are no longer part of the model
 
   // Translation methods
   async createTranslation(translationData: Partial<ServiceTranslationEntity>): Promise<ServiceTranslationEntity> {
@@ -146,7 +96,6 @@ export class ServicesRepository {
   async findTranslationsByServiceId(serviceId: string): Promise<ServiceTranslationEntity[]> {
     return this.translationRepository.find({
       where: { service_id: serviceId },
-      relations: ['language'],
     });
   }
 
@@ -158,7 +107,6 @@ export class ServicesRepository {
     await this.translationRepository.update(id, translationData);
     const updated = await this.translationRepository.findOne({
       where: { id },
-      relations: ['language'],
     });
     if (!updated) {
       throw new Error('Translation not found after update');
@@ -176,7 +124,6 @@ export class ServicesRepository {
         service_id: serviceId,
         language_code: languageCode 
       },
-      relations: ['language'],
     });
   }
 
@@ -193,9 +140,7 @@ export class ServicesRepository {
 
     const queryBuilder = this.serviceRepository
       .createQueryBuilder('service')
-      .leftJoinAndSelect('service.processSteps', 'processSteps')
-      .leftJoinAndSelect('service.translations', 'translations')
-      .leftJoinAndSelect('translations.language', 'language')
+      .leftJoinAndSelect('service.translations', 'translations', 'translations.service_id = service.id')
       .skip(skip)
       .take(limit)
       .orderBy('service.sort_order', 'ASC')

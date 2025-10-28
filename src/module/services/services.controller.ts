@@ -7,13 +7,10 @@ import {
   Param,
   Delete,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import {
-  ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
   ApiQuery,
 } from '@nestjs/swagger';
 import { ServicesService } from './services.service';
@@ -23,7 +20,6 @@ import {
   ServiceResponseDto,
   CreateTranslationDto,
 } from './dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PaginationOptions } from '@shared/utilities/pagination';
 import { Public } from '@module/auth/decorators/public.decorator';
 
@@ -126,6 +122,7 @@ export class ServicesController {
   async remove(@Param('id') id: string): Promise<{ message: string }> {
     return this.servicesService.remove(id);
   }
+  
   // Translation endpoints
   @Post(':id/translations')
   @Public()
@@ -154,7 +151,7 @@ export class ServicesController {
     return this.servicesService.getTranslations(serviceId);
   }
 
-  @Get(':id/translations/:languageId')
+  @Get(':id/translations/:languageCode')
   @Public()
   @ApiOperation({ summary: 'Get specific translation for service' })
   @ApiResponse({
@@ -164,12 +161,12 @@ export class ServicesController {
   @ApiResponse({ status: 404, description: 'Translation not found' })
   async getTranslation(
     @Param('id') serviceId: string,
-    @Param('languageId') languageId: string,
+    @Param('languageCode') languageCode: string,
   ): Promise<any> {
-    return this.servicesService.getTranslation(serviceId, languageId);
+    return this.servicesService.getTranslation(serviceId, languageCode);
   }
 
-  @Patch(':id/translations/:languageId')
+  @Patch(':id/translations/:languageCode')
   @Public()
   @ApiOperation({ summary: 'Update translation for service' })
   @ApiResponse({
@@ -179,13 +176,13 @@ export class ServicesController {
   @ApiResponse({ status: 404, description: 'Translation not found' })
   async updateTranslation(
     @Param('id') serviceId: string,
-    @Param('languageId') languageId: string,
+    @Param('languageCode') languageCode: string,
     @Body() translationData: any,
   ): Promise<any> {
-    return this.servicesService.updateTranslation(serviceId, languageId, translationData);
+    return this.servicesService.updateTranslation(serviceId, languageCode, translationData);
   }
 
-  @Delete(':id/translations/:languageId')
+  @Delete(':id/translations/:languageCode')
   @Public()
   @ApiOperation({ summary: 'Delete translation for service' })
   @ApiResponse({
@@ -195,9 +192,9 @@ export class ServicesController {
   @ApiResponse({ status: 404, description: 'Translation not found' })
   async deleteTranslation(
     @Param('id') serviceId: string,
-    @Param('languageId') languageId: string,
+    @Param('languageCode') languageCode: string,
   ): Promise<{ message: string }> {
-    return this.servicesService.deleteTranslation(serviceId, languageId);
+    return this.servicesService.deleteTranslation(serviceId, languageCode);
   }
 
   @Get('by-language/:languageCode')

@@ -11,8 +11,6 @@ import {
   CreateServiceDto,
   UpdateServiceDto,
   ServiceResponseDto,
-  CreateProcessStepDto,
-  UpdateProcessStepDto,
 } from './dto';
 import { ServiceEntity } from '@shared/entities';
 
@@ -43,13 +41,7 @@ export class ServicesService {
     return this.toServiceResponseDto(service);
   }
 
-  async findAll(options: PaginationOptions & { search?: string; }): Promise<{
-    data: ServiceResponseDto[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  }> {
+  async findAll(options: PaginationOptions & { search?: string; }): Promise<any> {
     const validatedOptions = {
       page: Math.max(1, options.page || 1),
       limit: Math.min(100, Math.max(1, options.limit || 10)),
@@ -57,11 +49,9 @@ export class ServicesService {
     };
 
     const result = await this.servicesRepository.findAll(validatedOptions);
+    console.log("🚀 ~ ServicesService ~ findAll ~ result:", result)
 
-    return {
-      ...result,
-      data: result.data.map(service => this.toServiceResponseDto(service)),
-    };
+    return result
   }
 
   async findOne(id: string): Promise<ServiceResponseDto> {
@@ -109,73 +99,14 @@ export class ServicesService {
   }
 
   async findFeatured(): Promise<ServiceResponseDto[]> {
-    const featuredServices = await this.servicesRepository.findFeatured();
-    return featuredServices.map(service => this.toServiceResponseDto(service));
+    return [];
   }
 
   async findByTags(tags: string[]): Promise<ServiceResponseDto[]> {
-    const services = await this.servicesRepository.findByTags(tags);
-    return services.map(service => this.toServiceResponseDto(service));
+    return [];
   }
 
-  // Process Step methods
-  async createProcessStep(createProcessStepDto: CreateProcessStepDto) {
-    const processStep = await this.servicesRepository.createProcessStep(createProcessStepDto);
-    return processStep;
-  }
-
-  async findProcessStepsByServiceId(serviceId: string) {
-    return this.servicesRepository.findProcessStepsByServiceId(serviceId);
-  }
-
-  async findProcessStepById(id: string) {
-    const processStep = await this.servicesRepository.findProcessStepById(id);
-    if (!processStep) {
-      throw new NotFoundException('Process step not found');
-    }
-    return processStep;
-  }
-
-  async updateProcessStep(id: string, updateProcessStepDto: UpdateProcessStepDto) {
-    const processStep = await this.servicesRepository.findProcessStepById(id);
-    if (!processStep) {
-      throw new NotFoundException('Process step not found');
-    }
-
-    return this.servicesRepository.updateProcessStep(id, updateProcessStepDto);
-  }
-
-  async removeProcessStep(id: string): Promise<{ message: string }> {
-    const processStep = await this.servicesRepository.findProcessStepById(id);
-    if (!processStep) {
-      throw new NotFoundException('Process step not found');
-    }
-
-    await this.servicesRepository.deleteProcessStep(id);
-    return { message: 'Process step deleted successfully' };
-  }
-
-  async reorderProcessSteps(
-    serviceId: string,
-    stepOrders: { id: string; step_order: number }[],
-  ): Promise<{ message: string }> {
-    // Validate that all step IDs belong to the service
-    const service = await this.servicesRepository.findById(serviceId);
-    if (!service) {
-      throw new NotFoundException('Service not found');
-    }
-
-    const serviceStepIds = service.processSteps.map(step => step.id);
-    const providedStepIds = stepOrders.map(step => step.id);
-
-    const invalidStepIds = providedStepIds.filter(id => !serviceStepIds.includes(id));
-    if (invalidStepIds.length > 0) {
-      throw new BadRequestException(`Invalid step IDs: ${invalidStepIds.join(', ')}`);
-    }
-
-    await this.servicesRepository.reorderProcessSteps(serviceId, stepOrders);
-    return { message: 'Process steps reordered successfully' };
-  }
+  // Process step APIs removed as not part of the model
 
   private async createTranslations(serviceId: string, translations: any[]): Promise<void> {
     for (const translation of translations) {
@@ -196,7 +127,7 @@ export class ServicesService {
     // Check if translation already exists for this language
     const existingTranslation = await this.servicesRepository.findTranslationByServiceAndLanguage(
       serviceId, 
-      translationData.language_id
+      translationData.language_code
     );
     
     if (existingTranslation) {
@@ -220,10 +151,10 @@ export class ServicesService {
     return this.servicesRepository.findTranslationsByServiceId(serviceId);
   }
 
-  async getTranslation(serviceId: string, languageId: string): Promise<any> {
+  async getTranslation(serviceId: string, languageCode: string): Promise<any> {
     const translation = await this.servicesRepository.findTranslationByServiceAndLanguage(
       serviceId, 
-      languageId
+      languageCode
     );
     
     if (!translation) {
@@ -233,10 +164,10 @@ export class ServicesService {
     return translation;
   }
 
-  async updateTranslation(serviceId: string, languageId: string, translationData: any): Promise<any> {
+  async updateTranslation(serviceId: string, languageCode: string, translationData: any): Promise<any> {
     const translation = await this.servicesRepository.findTranslationByServiceAndLanguage(
       serviceId, 
-      languageId
+      languageCode
     );
     
     if (!translation) {
@@ -246,10 +177,10 @@ export class ServicesService {
     return this.servicesRepository.updateTranslation(translation.id, translationData);
   }
 
-  async deleteTranslation(serviceId: string, languageId: string): Promise<{ message: string }> {
+  async deleteTranslation(serviceId: string, languageCode: string): Promise<{ message: string }> {
     const translation = await this.servicesRepository.findTranslationByServiceAndLanguage(
       serviceId, 
-      languageId
+      languageCode
     );
     
     if (!translation) {

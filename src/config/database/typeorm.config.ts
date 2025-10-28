@@ -46,7 +46,7 @@ export const AppDataSource: DataSourceOptions = {
     WebConfigEntity, ContactEntity, AttachmentsEntity
   ],
   migrations: ['dist/migrations/*{.ts,.js}'],
-  synchronize: false,
+  synchronize: true,
   logging: process.env.NODE_ENV !== 'production',
 };
 

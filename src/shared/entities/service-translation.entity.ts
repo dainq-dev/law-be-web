@@ -3,7 +3,6 @@ import { Column, Entity, ManyToOne, JoinColumn, Index, Unique } from 'typeorm';
 import { ServiceEntity } from './service.entity';
 
 @Entity({ name: 'service_translations' })
-@Unique(['service_id'])
 export class ServiceTranslationEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: false })
   name: string;
@@ -15,10 +14,7 @@ export class ServiceTranslationEntity extends BaseEntity {
   description: string;
 
   @Column({ type: 'text', nullable: true })
-  features: string;
-
-  @Column({ type: 'text', nullable: true })
-  requirements: string;
+  legal_fields: string;
 
   @ManyToOne(() => ServiceEntity, (service) => service.translations, {
     onDelete: 'CASCADE',
