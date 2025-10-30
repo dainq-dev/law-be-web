@@ -9,16 +9,12 @@ export class PublicBlogsService {
 
   async findAll(query: PaginationDto & { 
     search?: string; 
-    category_id?: string; 
-    is_featured?: boolean; 
-    show_on_homepage?: boolean;
-    field?: string;
+    is_featured?: boolean;
   }) {
     // Chỉ lấy các bài viết đã published
     const filters = {
       ...query,
       status: 'published',
-      is_active: true,
     };
 
     const result = await this.publicBlogsRepository.findAll(filters);
@@ -46,19 +42,8 @@ export class PublicBlogsService {
   }
 
   async getFeaturedBlogs(limit?: number) {
-    return this.publicBlogsRepository.getFeaturedBlogs(limit);
-  }
-
-  async getHomepageBlogs(limit?: number) {
-    return this.publicBlogsRepository.getHomepageBlogs(limit);
-  }
-
-  async findAllCategories(query: PaginationDto & { search?: string }) {
-    return this.publicBlogsRepository.findAllCategories(query);
-  }
-
-  async incrementViewCount(id: string) {
-    return this.publicBlogsRepository.incrementViewCount(id);
+    const blogs = await this.publicBlogsRepository.getFeaturedBlogs(limit);
+    return blogs.map(blog => this.transformBlogForClient(blog));
   }
 
   private transformBlogForClient(blog: any): BlogResponseDto {
@@ -67,14 +52,13 @@ export class PublicBlogsService {
       transformed.postBlocks = transformed.postBlocks
         .map((block: any) => ({
           id: block.id,
-          type: block.type || block.block_type,
+          block_type: block.block_type,
           content: block.content,
-          order: typeof block.order === 'number' ? block.order : block.order_index ?? 0,
-          order_index: typeof block.order === 'number' ? block.order : block.order_index ?? 0,
-          style: block.style,
+          order: typeof block.order === 'number' ? block.order : 0,
           is_featured: block.is_featured,
           metadata: block.metadata,
           css_class: block.css_class,
+          style: block.style,
         }))
         .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
     }

@@ -19,22 +19,18 @@ import {
   UpdateCertificateDto,
   CertificateResponseDto,
 } from './dto';
-import { HumanResourceEntity, HumanResourceTranslationEntity } from '@shared/entities';
-import { TranslationService } from '@shared/services/translation.service';
+import { HumanResourceEntity } from '@shared/entities';
 import { LanguageQueryDto } from '@shared/dto/query.dto';
 
 @Injectable()
 export class HumanResourcesService {
   constructor(
     private readonly humanResourcesRepository: HumanResourcesRepository,
-    private readonly translationService: TranslationService,
     private readonly uploadService: UploadService,
   ) {}
 
   // Human Resource methods
   async create(createHumanResourceDto: CreateHumanResourceDto): Promise<HumanResourceResponseDto> {
-    const { first_name, last_name, company_name, translations, ...humanResourceData } = createHumanResourceDto;
-
     // Check if email already exists
     const existingHumanResource = await this.humanResourcesRepository.findByEmail(
       createHumanResourceDto.email
@@ -43,28 +39,17 @@ export class HumanResourcesService {
       throw new ConflictException('Email already exists');
     }
 
-    // Create full name
-    const full_name = `${first_name} ${last_name}`.trim();
-
-    // Create human resource
+    // Create human resource with multilingual fields
     const humanResource = await this.humanResourcesRepository.create({
-      ...humanResourceData,
-      first_name,
-      last_name,
-      full_name,
+      ...createHumanResourceDto,
       is_active: createHumanResourceDto.is_active ?? true,
       date_of_birth: createHumanResourceDto.date_of_birth ? new Date(createHumanResourceDto.date_of_birth) : undefined,
     });
 
-    // Create translations if provided
-    if (translations && translations.length > 0) {
-      await this.createTranslations(humanResource.id, translations);
-    }
-
     return this.toHumanResourceResponseDto(humanResource);
   }
 
-  async findAll(options: PaginationQueryDto & { search?: string; company_name?: string }): Promise<{
+  async findAll(options: PaginationQueryDto & { search?: string }): Promise<{
     data: HumanResourceResponseDto[];
     total: number;
     page: number;
@@ -75,17 +60,16 @@ export class HumanResourcesService {
       page: options.page,
       limit: options.limit,
       search: options.search,
-      company_name: options.company_name,
     };
 
     const result = await this.humanResourcesRepository.findAll(validatedOptions);
 
-    // Get language ID for translation
-    const languageId = await this.translationService.getLanguageId(options.language || options.language_id);
+    // Get language from either language_code or language (compat)
+    const languageCode = options.language_code || (options as any).language || null;
 
     return {
       ...result,
-      data: result.data.map(hr => this.toHumanResourceResponseDto(hr, languageId)),
+      data: result.data.map(hr => this.toHumanResourceResponseDto(hr, null, languageCode)),
     };
   }
 
@@ -95,12 +79,10 @@ export class HumanResourcesService {
       throw new NotFoundException('Human resource not found');
     }
 
-    // Get language ID for translation
-    const languageId = languageQuery ? 
-      await this.translationService.getLanguageId(languageQuery.language || languageQuery.language_id) : 
-      null;
+    // Get language code for translation
+    const languageCode = languageQuery?.language_code || languageQuery?.language || null;
 
-    return this.toHumanResourceResponseDto(humanResource, languageId);
+    return this.toHumanResourceResponseDto(humanResource, null, languageCode);
   }
 
   async update(id: string, updateHumanResourceDto: UpdateHumanResourceDto): Promise<HumanResourceResponseDto> {
@@ -119,24 +101,13 @@ export class HumanResourcesService {
       }
     }
 
-    // Update full name if first_name or last_name is being changed
-    let full_name = humanResource.full_name;
-    if (updateHumanResourceDto.first_name || updateHumanResourceDto.last_name) {
-      const first_name = updateHumanResourceDto.first_name || humanResource.first_name;
-      const last_name = updateHumanResourceDto.last_name || humanResource.last_name;
-      full_name = `${first_name} ${last_name}`.trim();
-    }
-
     // Convert date string to Date object if provided
     const updateData: any = { ...updateHumanResourceDto };
     if (updateHumanResourceDto.date_of_birth) {
       updateData.date_of_birth = new Date(updateHumanResourceDto.date_of_birth);
     }
 
-    const updatedHumanResource = await this.humanResourcesRepository.update(id, {
-      ...updateData,
-      full_name,
-    });
+    const updatedHumanResource = await this.humanResourcesRepository.update(id, updateData);
 
     return this.toHumanResourceResponseDto(updatedHumanResource);
   }
@@ -167,15 +138,21 @@ export class HumanResourcesService {
     }
     
     const educationData = {
-      degree: createEducationDto.degree,
-      university: createEducationDto.institution, // map field name
-      field_of_study: createEducationDto.field_of_study,
+      degree_vi: createEducationDto.degree_vi,
+      degree_en: createEducationDto.degree_en,
+      degree_zh: createEducationDto.degree_zh,
+      university_vi: createEducationDto.university_vi,
+      university_en: createEducationDto.university_en,
+      university_zh: createEducationDto.university_zh,
+      field_of_study_vi: createEducationDto.field_of_study_vi,
+      field_of_study_en: createEducationDto.field_of_study_en,
+      field_of_study_zh: createEducationDto.field_of_study_zh,
+      description_vi: createEducationDto.description_vi ?? null,
+      description_en: createEducationDto.description_en ?? null,
+      description_zh: createEducationDto.description_zh ?? null,
       from: createEducationDto.start_date ? new Date(createEducationDto.start_date) : undefined,
       to: createEducationDto.end_date ? new Date(createEducationDto.end_date) : undefined,
-      grade: createEducationDto.grade,
-      description: (createEducationDto as any).description ?? null,
-      // set relation so hr_id is persisted
-      humanResource: { id: createEducationDto.human_resource_id } as any,
+      staff_id: createEducationDto.human_resource_id,
     };
     console.log('Education data to save:', educationData);
     const education = await this.humanResourcesRepository.createEducation(educationData);
@@ -183,10 +160,9 @@ export class HumanResourcesService {
     return education;
   }
 
-  async findEducationsByHumanResourceId(humanResourceId: string) {
-    console.log('Finding educations for human resource:', humanResourceId);
+  async findEducationsByHumanResourceId(humanResourceId: string, languageQuery?: LanguageQueryDto) {
     const educations = await this.humanResourcesRepository.findEducationsByHumanResourceId(humanResourceId);
-    console.log('Found educations:', educations);
+
     return educations;
   }
 
@@ -204,7 +180,28 @@ export class HumanResourcesService {
       throw new NotFoundException('Education not found');
     }
 
-    return this.humanResourcesRepository.updateEducation(id, updateEducationDto);
+    // Map DTO fields to entity fields (all multilingual fields)
+    const updateData: any = {};
+    if (updateEducationDto.degree_vi !== undefined) updateData.degree_vi = updateEducationDto.degree_vi;
+    if (updateEducationDto.degree_en !== undefined) updateData.degree_en = updateEducationDto.degree_en;
+    if (updateEducationDto.degree_zh !== undefined) updateData.degree_zh = updateEducationDto.degree_zh;
+    if (updateEducationDto.university_vi !== undefined) updateData.university_vi = updateEducationDto.university_vi;
+    if (updateEducationDto.university_en !== undefined) updateData.university_en = updateEducationDto.university_en;
+    if (updateEducationDto.university_zh !== undefined) updateData.university_zh = updateEducationDto.university_zh;
+    if (updateEducationDto.field_of_study_vi !== undefined) updateData.field_of_study_vi = updateEducationDto.field_of_study_vi;
+    if (updateEducationDto.field_of_study_en !== undefined) updateData.field_of_study_en = updateEducationDto.field_of_study_en;
+    if (updateEducationDto.field_of_study_zh !== undefined) updateData.field_of_study_zh = updateEducationDto.field_of_study_zh;
+    if (updateEducationDto.description_vi !== undefined) updateData.description_vi = updateEducationDto.description_vi ?? null;
+    if (updateEducationDto.description_en !== undefined) updateData.description_en = updateEducationDto.description_en ?? null;
+    if (updateEducationDto.description_zh !== undefined) updateData.description_zh = updateEducationDto.description_zh ?? null;
+    if (updateEducationDto.start_date) {
+      updateData.from = new Date(updateEducationDto.start_date);
+    }
+    if (updateEducationDto.end_date) {
+      updateData.to = new Date(updateEducationDto.end_date);
+    }
+
+    return this.humanResourcesRepository.updateEducation(id, updateData);
   }
 
   async removeEducation(id: string): Promise<{ message: string }> {
@@ -228,14 +225,20 @@ export class HumanResourcesService {
     }
     
     const experienceData = {
-      company: (createExperienceDto as any).company ?? null,
-      position: (createExperienceDto as any).position ?? createExperienceDto.title,
-      location: (createExperienceDto as any).location ?? null,
+      company_vi: createExperienceDto.company_vi,
+      company_en: createExperienceDto.company_en,
+      company_zh: createExperienceDto.company_zh,
+      position_vi: createExperienceDto.position_vi,
+      position_en: createExperienceDto.position_en,
+      position_zh: createExperienceDto.position_zh,
+      description_vi: createExperienceDto.description_vi ?? null,
+      description_en: createExperienceDto.description_en ?? null,
+      description_zh: createExperienceDto.description_zh ?? null,
       start_date: createExperienceDto.start_date ? new Date(createExperienceDto.start_date) : undefined,
       end_date: createExperienceDto.end_date ? new Date(createExperienceDto.end_date) : undefined,
-      description: (createExperienceDto as any).description ?? null,
-      is_current: (createExperienceDto as any).is_current ?? false,
-      humanResource: { id: createExperienceDto.human_resource_id } as any,
+      // set relation so staff_id is persisted
+      staff: { id: createExperienceDto.human_resource_id } as any,
+      staff_id: createExperienceDto.human_resource_id,
     };
     console.log('Experience data to save:', experienceData);
     const experience = await this.humanResourcesRepository.createExperience(experienceData);
@@ -243,8 +246,9 @@ export class HumanResourcesService {
     return experience;
   }
 
-  async findExperiencesByHumanResourceId(humanResourceId: string) {
+  async findExperiencesByHumanResourceId(humanResourceId: string, languageQuery?: LanguageQueryDto) {
     const experiences = await this.humanResourcesRepository.findExperiencesByHumanResourceId(humanResourceId);
+
     return experiences;
   }
 
@@ -258,12 +262,21 @@ export class HumanResourcesService {
 
   async updateExperience(id: string, updateExperienceDto: Partial<CreateExperienceDto>) {
     const experience = await this.humanResourcesRepository.findExperienceById(id);
-    console.log("🚀 ~ HumanResourcesService ~ updateExperience ~ experience:", experience)
     if (!experience) {
       throw new NotFoundException('Experience not found');
     }
 
-    const updateData: any = { ...updateExperienceDto };
+    // Map DTO fields to entity fields (all multilingual fields)
+    const updateData: any = {};
+    if (updateExperienceDto.position_vi !== undefined) updateData.position_vi = updateExperienceDto.position_vi;
+    if (updateExperienceDto.position_en !== undefined) updateData.position_en = updateExperienceDto.position_en;
+    if (updateExperienceDto.position_zh !== undefined) updateData.position_zh = updateExperienceDto.position_zh;
+    if (updateExperienceDto.company_vi !== undefined) updateData.company_vi = updateExperienceDto.company_vi;
+    if (updateExperienceDto.company_en !== undefined) updateData.company_en = updateExperienceDto.company_en;
+    if (updateExperienceDto.company_zh !== undefined) updateData.company_zh = updateExperienceDto.company_zh;
+    if (updateExperienceDto.description_vi !== undefined) updateData.description_vi = updateExperienceDto.description_vi ?? null;
+    if (updateExperienceDto.description_en !== undefined) updateData.description_en = updateExperienceDto.description_en ?? null;
+    if (updateExperienceDto.description_zh !== undefined) updateData.description_zh = updateExperienceDto.description_zh ?? null;
     if (updateExperienceDto.start_date) {
       updateData.start_date = new Date(updateExperienceDto.start_date);
     }
@@ -284,34 +297,21 @@ export class HumanResourcesService {
     return { message: 'Experience deleted successfully' };
   }
 
-  private async createTranslations(humanResourceId: string, translations: any[]): Promise<void> {
-    for (const translation of translations) {
-      await this.humanResourcesRepository.createTranslation({
-        ...translation,
-        human_resource_id: humanResourceId,
-      });
-    }
-  }
 
-  private toHumanResourceResponseDto(humanResource: HumanResourceEntity, languageId?: string | null): HumanResourceResponseDto {
+  private toHumanResourceResponseDto(humanResource: HumanResourceEntity, languageId?: string | null, languageCode?: string | null): HumanResourceResponseDto {
+    // If language code is specified, merge the fields for that language into the base fields
     let responseData = plainToClass(HumanResourceResponseDto, humanResource, {
       excludeExtraneousValues: true,
     });
 
-    // If language ID is provided, try to get translation
-    if (languageId && humanResource.translations) {
-      const translation = this.translationService.getTranslation(humanResource, languageId);
-      if (translation) {
-        responseData = this.translationService.mergeWithTranslation(responseData, translation);
-      }
-    }
-
+    // If a specific language code is requested, we still return all fields but can prioritize that language in the response
+    // The response DTO already contains all language fields, so just return as is
     return responseData;
   }
 
   // Certificate methods
   async createCertificate(createCertificateDto: CreateCertificateDto): Promise<CertificateResponseDto> {
-    const { human_resource_id } = createCertificateDto;
+    const { human_resource_id, name_vi, name_en, name_zh, issuing_organization_vi, issuing_organization_en, issuing_organization_zh, description_vi, description_en, description_zh, issue_date, expiration_date, credential_id, credential_url } = createCertificateDto;
 
     // Verify human resource exists
     const humanResource = await this.humanResourcesRepository.findById(human_resource_id);
@@ -319,13 +319,35 @@ export class HumanResourcesService {
       throw new NotFoundException('Human resource not found');
     }
 
-    const certificate = await this.humanResourcesRepository.createCertificate(createCertificateDto);
+    // Map DTO fields to entity fields (all multilingual fields)
+    const certificateData = {
+      name_vi,
+      name_en,
+      name_zh,
+      issuing_organization_vi: issuing_organization_vi ?? null,
+      issuing_organization_en: issuing_organization_en ?? null,
+      issuing_organization_zh: issuing_organization_zh ?? null,
+      description_vi: description_vi ?? null,
+      description_en: description_en ?? null,
+      description_zh: description_zh ?? null,
+      issue_date: issue_date ? ((issue_date as any) instanceof Date ? issue_date : new Date(issue_date)) : undefined,
+      expiration_date: expiration_date ? ((expiration_date as any) instanceof Date ? expiration_date : new Date(expiration_date)) : undefined,
+      credential_id: credential_id ?? null,
+      credential_url: credential_url ?? null,
+      staff_id: human_resource_id,
+      staff: { id: human_resource_id } as any,
+    };
+
+    const certificate = await this.humanResourcesRepository.createCertificate(certificateData);
     return this.toCertificateResponseDto(certificate);
   }
 
-  async findCertificatesByHumanResourceId(humanResourceId: string): Promise<CertificateResponseDto[]> {
+  async findCertificatesByHumanResourceId(humanResourceId: string, languageQuery?: LanguageQueryDto): Promise<CertificateResponseDto[]> {
     const certificates = await this.humanResourcesRepository.findCertificatesByHumanResourceId(humanResourceId);
-    return certificates.map(cert => this.toCertificateResponseDto(cert));
+
+    const merged = certificates
+
+    return merged.map(cert => this.toCertificateResponseDto(cert));
   }
 
   async findCertificateById(id: string): Promise<CertificateResponseDto> {
@@ -342,7 +364,35 @@ export class HumanResourcesService {
       throw new NotFoundException('Certificate not found');
     }
 
-    const updated = await this.humanResourcesRepository.updateCertificate(id, updateCertificateDto);
+    // Map DTO fields to entity fields (all multilingual fields)
+    const updateData: any = {};
+    if (updateCertificateDto.name_vi !== undefined) updateData.name_vi = updateCertificateDto.name_vi;
+    if (updateCertificateDto.name_en !== undefined) updateData.name_en = updateCertificateDto.name_en;
+    if (updateCertificateDto.name_zh !== undefined) updateData.name_zh = updateCertificateDto.name_zh;
+    if (updateCertificateDto.issuing_organization_vi !== undefined) updateData.issuing_organization_vi = updateCertificateDto.issuing_organization_vi ?? null;
+    if (updateCertificateDto.issuing_organization_en !== undefined) updateData.issuing_organization_en = updateCertificateDto.issuing_organization_en ?? null;
+    if (updateCertificateDto.issuing_organization_zh !== undefined) updateData.issuing_organization_zh = updateCertificateDto.issuing_organization_zh ?? null;
+    if (updateCertificateDto.description_vi !== undefined) updateData.description_vi = updateCertificateDto.description_vi ?? null;
+    if (updateCertificateDto.description_en !== undefined) updateData.description_en = updateCertificateDto.description_en ?? null;
+    if (updateCertificateDto.description_zh !== undefined) updateData.description_zh = updateCertificateDto.description_zh ?? null;
+    if (updateCertificateDto.issue_date) {
+      updateData.issue_date = (updateCertificateDto.issue_date as any) instanceof Date 
+        ? updateCertificateDto.issue_date 
+        : new Date(updateCertificateDto.issue_date as string);
+    }
+    if (updateCertificateDto.expiration_date) {
+      updateData.expiration_date = (updateCertificateDto.expiration_date as any) instanceof Date
+        ? updateCertificateDto.expiration_date
+        : new Date(updateCertificateDto.expiration_date as string);
+    }
+    if (updateCertificateDto.credential_id !== undefined) {
+      updateData.credential_id = updateCertificateDto.credential_id;
+    }
+    if (updateCertificateDto.credential_url !== undefined) {
+      updateData.credential_url = updateCertificateDto.credential_url;
+    }
+
+    const updated = await this.humanResourcesRepository.updateCertificate(id, updateData);
     return this.toCertificateResponseDto(updated);
   }
 
@@ -357,7 +407,13 @@ export class HumanResourcesService {
   }
 
   private toCertificateResponseDto(certificate: any): CertificateResponseDto {
-    return plainToClass(CertificateResponseDto, certificate, {
+    // Map entity fields to DTO fields for backward compatibility
+    const mappedCert = {
+      ...certificate,
+      human_resource_id: certificate.human_resource_id || certificate.staff_id,
+    };
+
+    return plainToClass(CertificateResponseDto, mappedCert, {
       excludeExtraneousValues: true,
     });
   }
@@ -399,4 +455,6 @@ export class HumanResourcesService {
       message: 'Avatar uploaded successfully',
     };
   }
+
+  // Translation methods removed - translations are now stored as columns in the main entity
 }

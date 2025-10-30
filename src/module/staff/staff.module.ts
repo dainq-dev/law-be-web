@@ -3,9 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { HumanResourcesController } from './staff.controller';
 import { HumanResourcesService } from './staff.service';
 import { HumanResourcesRepository } from './staff.repository';
-import { HumanResourceEntity, EducationEntity, ExperienceEntity, CertificateEntity, HumanResourceTranslationEntity, LanguageEntity } from '@shared/entities';
-import { TranslationService } from '@shared/services/translation.service';
-import { LanguageService } from '@shared/services/language.service';
+import { HumanResourceEntity, EducationEntity, ExperienceEntity, CertificateEntity } from '@shared/entities';
 import { UploadService } from '@shared/services/upload.service';
 
 @Module({
@@ -14,17 +12,13 @@ import { UploadService } from '@shared/services/upload.service';
       HumanResourceEntity, 
       EducationEntity, 
       ExperienceEntity,
-      CertificateEntity,
-      HumanResourceTranslationEntity,
-      LanguageEntity
+      CertificateEntity
     ]),
   ],
   controllers: [HumanResourcesController],
   providers: [
     HumanResourcesService, 
     HumanResourcesRepository,
-    TranslationService,
-    LanguageService,
     UploadService
   ],
   exports: [HumanResourcesService],

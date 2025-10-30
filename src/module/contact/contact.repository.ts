@@ -20,25 +20,10 @@ export class ContactRepository {
     return this.contactRepository.findOne({ where: { id } });
   }
 
-  async findAll( ): Promise<ContactEntity[]> {
-
-    const queryBuilder = this.contactRepository
-      .createQueryBuilder('contact')
-      .select([
-        'contact.id',
-        'contact.full_name',
-        'contact.email',
-        'contact.phone_number',
-        'contact.subject',
-        'contact.message',
-        'contact.company',
-        'contact.status',
-        'contact.created_at',
-      ])
-      .orderBy('contact.created_at', 'DESC');
-
-    const result = await queryBuilder.getMany();
-    return result;
+  async findAll(): Promise<ContactEntity[]> {
+    return this.contactRepository.find({
+      order: { created_at: 'DESC' },
+    });
   }
 
   async update(

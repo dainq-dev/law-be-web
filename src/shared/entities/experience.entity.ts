@@ -4,11 +4,27 @@ import { HumanResourceEntity } from './staff.entity';
 
 @Entity({ name: 'experience' })
 export class ExperienceEntity extends BaseEntity {
+  // Vietnamese (main language - kept for backward compatibility)
   @Column({ type: 'varchar', length: 255, nullable: true })
-  company: string;
+  company_vi: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  company_en: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  company_zh: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  position: string;
+  position_vi: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  position_en: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  position_zh: string;
+
+  @Column({ type: 'text', nullable: true })
+  description_vi: string;
+  @Column({ type: 'text', nullable: true })
+  description_en: string;
+  @Column({ type: 'text', nullable: true })
+  description_zh: string;
 
   @Column({ type: 'date', nullable: true })
   start_date: Date;
@@ -16,16 +32,13 @@ export class ExperienceEntity extends BaseEntity {
   @Column({ type: 'date', nullable: true })
   end_date: Date;
 
-  @Column({ type: 'text', nullable: true })
-  description: string;
-
   @ManyToOne(() => HumanResourceEntity, (hr) => hr.experiences, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'hr_id' })
-  humanResource: HumanResourceEntity;
+  @JoinColumn({ name: 'staff_id' })
+  staff: HumanResourceEntity;
 
   @Index()
   @Column({ type: 'uuid', nullable: true })
-  hr_id: string;
+  staff_id: string;
 }

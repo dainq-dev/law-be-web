@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 
-export class AdminDashboardStatsDto {
+export class  AdminDashboardStatsDto {
   @ApiProperty({ description: 'Tổng số quản trị viên' })
   @Expose()
   total_admins: number;
@@ -17,10 +17,6 @@ export class AdminDashboardStatsDto {
   @ApiProperty({ description: 'Tổng số bài viết' })
   @Expose()
   total_blogs: number;
-
-  @ApiProperty({ description: 'Tổng số danh mục' })
-  @Expose()
-  total_categories: number;
 
   @ApiProperty({ description: 'Tổng số liên hệ' })
   @Expose()

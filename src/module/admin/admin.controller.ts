@@ -7,13 +7,10 @@ import {
   Param,
   Delete,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import {
-  ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
   ApiQuery,
 } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
@@ -24,7 +21,6 @@ import {
   CreateRoleDto,
   UpdateRoleDto,
   CreatePermissionDto,
-  UpdatePermissionDto,
   AdminDashboardStatsDto,
   AdminDashboardDataDto,
 } from './dto';
@@ -194,30 +190,5 @@ export class AdminController {
     @Query() options: PaginationOptions & { search?: string },
   ) {
     return this.adminService.findAllPermissions(options);
-  }
-  
-  // Dashboard endpoints
-  @Get('dashboard')
-  @Public()
-  @ApiOperation({ summary: 'Get admin dashboard data' })
-  @ApiResponse({
-    status: 200,
-    description: 'Dashboard data retrieved successfully',
-    type: AdminDashboardDataDto,
-  })
-  async getDashboard(): Promise<AdminDashboardDataDto> {
-    return this.adminService.getDashboardData();
-  }
-  
-  @Get('dashboard/stats')
-  @Public()
-  @ApiOperation({ summary: 'Get admin dashboard statistics' })
-  @ApiResponse({
-    status: 200,
-    description: 'Dashboard statistics retrieved successfully',
-    type: AdminDashboardStatsDto,
-  })
-  async getDashboardStats(): Promise<AdminDashboardStatsDto> {
-    return this.adminService.getDashboardStats();
   }
 }

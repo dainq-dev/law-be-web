@@ -47,69 +47,83 @@ export class HomepageService {
   private async getFeaturedHumanResources(): Promise<any[]> {
     const humanResources = await this.humanResourceRepository.find({
       where: { is_active: true, is_featured: true },
-      relations: ['educations', 'experiences', 'certificates', 'translations'],
+      relations: ['educations', 'experiences', 'certificates'],
       take: 6,
       order: { created_at: 'DESC' },
     });
 
     return humanResources.map(hr => ({
       id: hr.id,
-      full_name: hr.full_name,
-      position: hr.position,
+      full_name_vi: hr.full_name_vi,
+      full_name_en: hr.full_name_en,
+      full_name_zh: hr.full_name_zh,
+      position_vi: hr.position_vi,
+      position_en: hr.position_en,
+      position_zh: hr.position_zh,
       avatar_url: hr.avatar_url,
       email: hr.email,
       phone_number: hr.phone_number,
-      about: hr.about,
-      location: hr.location,
-      translations: hr.translations,
+      about_vi: hr.about_vi,
+      about_en: hr.about_en,
+      about_zh: hr.about_zh,
+      location_vi: hr.location_vi,
+      location_en: hr.location_en,
+      location_zh: hr.location_zh,
     }));
   }
 
   private async getFeaturedServices(): Promise<any[]> {
     const services = await this.serviceRepository.find({
       where: { is_active: true, is_featured: true },
-      relations: ['processSteps', 'translations'],
       take: 6,
       order: { created_at: 'DESC' },
     });
 
     return services.map(service => ({
       id: service.id,
-      name: service.name,
-      short_description: service.short_description,
-      description: service.description,
+      name_vi: service.name_vi,
+      name_en: service.name_en,
+      name_zh: service.name_zh,
+      short_description_vi: service.short_description_vi,
+      short_description_en: service.short_description_en,
+      short_description_zh: service.short_description_zh,
+      description_vi: service.description_vi,
+      description_en: service.description_en,
+      description_zh: service.description_zh,
       image_url: service.image_url,
-      legal_fields: service.legal_fields ? JSON.parse(service.legal_fields) : [],
-      translations: service.translations,
+      legal_fields_vi: service.legal_fields_vi ? JSON.parse(service.legal_fields_vi) : [],
+      legal_fields_en: service.legal_fields_en ? JSON.parse(service.legal_fields_en) : [],
+      legal_fields_zh: service.legal_fields_zh ? JSON.parse(service.legal_fields_zh) : [],
     }));
   }
 
   private async getRecentBlogPosts(): Promise<any[]> {
     const blogs = await this.blogRepository.find({
       where: { 
-        is_active: true,
         status: 'published',
       },
-      relations: ['translations'],
       take: 6,
       order: { published_at: 'DESC' },
     });
 
     return blogs.map(blog => ({
       id: blog.id,
-      title: blog.title,
-      excerpt: blog.excerpt,
+      title_vi: blog.title_vi,
+      title_en: blog.title_en,
+      title_zh: blog.title_zh,
+      excerpt_vi: blog.excerpt_vi,
+      excerpt_en: blog.excerpt_en,
+      excerpt_zh: blog.excerpt_zh,
+      description_vi: blog.description_vi,
+      description_en: blog.description_en,
+      description_zh: blog.description_zh,
       slug: blog.slug,
       published_at: blog.published_at,
       status: blog.status,
-      author: blog.author,
-      translations: blog.translations,
       featured_image_url: blog.featured_image_url,
       featured_image_alt: blog.featured_image_alt,
-      meta_title: blog.meta_title,
-      meta_description: blog.meta_description,
-      og_image_url: blog.og_image_url,
-      social_media: blog.social_media,
+      is_featured: blog.is_featured,
+      like_count: blog.like_count,
     }));
   }
   private async getConfig(): Promise<any[]> {
@@ -165,8 +179,22 @@ export class HomepageService {
   async getServices(): Promise<any> {
     const services = await this.serviceRepository.find({
       where: { is_active: true, is_featured: true },
-      relations: ['processSteps', 'translations'],
-      select: ['id', 'name', 'short_description', 'description', 'image_url', 'legal_fields'],
+      select: [
+        'id',
+        'name_vi',
+        'name_en',
+        'name_zh',
+        'short_description_vi',
+        'short_description_en',
+        'short_description_zh',
+        'description_vi',
+        'description_en',
+        'description_zh',
+        'image_url',
+        'legal_fields_vi',
+        'legal_fields_en',
+        'legal_fields_zh',
+      ],
       order: { created_at: 'DESC' },
     });
     return services;

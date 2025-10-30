@@ -2,86 +2,78 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 
 export class HumanResourceResponseDto {
-  @ApiProperty({ description: 'Human resource ID', example: 'uuid-string' })
   @Expose()
   id: string;
 
-  @ApiProperty({ description: 'First name', example: 'John' })
   @Expose()
-  first_name: string;
+  full_name_vi: string;
 
-  @ApiProperty({ description: 'Last name', example: 'Doe' })
   @Expose()
-  last_name: string;
+  full_name_en?: string;
 
-  @ApiProperty({ description: 'Full name', example: 'John Doe' })
   @Expose()
-  full_name: string;
+  full_name_zh?: string;
 
-  @ApiProperty({ description: 'Position', example: 'Senior Lawyer' })
   @Expose()
-  position: string;
+  position_vi: string;
 
-  @ApiProperty({ description: 'Email', example: 'john.doe@lawcompany.com' })
+  @Expose()
+  position_en?: string;
+
+  @Expose()
+  position_zh?: string;
+
   @Expose()
   email: string;
 
-  @ApiProperty({ description: 'Phone number', example: '+1234567890' })
   @Expose()
   phone_number: string;
 
-  @ApiProperty({ description: 'About information' })
   @Expose()
-  about: string;
+  about_vi?: string;
 
-  @ApiProperty({ description: 'Location', example: 'New York, NY' })
   @Expose()
-  location: string;
+  about_en?: string;
 
-  @ApiProperty({ description: 'Avatar URL' })
+  @Expose()
+  about_zh?: string;
+
+  @Expose()
+  location_vi?: string;
+
+  @Expose()
+  location_en?: string;
+
+  @Expose()
+  location_zh?: string;
+
   @Expose()
   avatar_url: string;
 
-  @ApiProperty({ description: 'Department', example: 'Corporate Law' })
-  @Expose()
-  department: string;
-
-  @ApiProperty({ description: 'Date of birth' })
   @Expose()
   date_of_birth: Date;
 
-  @ApiProperty({ description: 'Gender', example: 'Male' })
   @Expose()
   gender: string;
 
-  @ApiProperty({ description: 'Address' })
   @Expose()
-  address: string;
+  address_vi?: string;
 
-  @ApiProperty({ description: 'Sort order' })
   @Expose()
-  sort_order: number;
+  address_en?: string;
 
-  @ApiProperty({ description: 'Is active status' })
+  @Expose()
+  address_zh?: string;
+
   @Expose()
   is_active: boolean;
 
-  @ApiProperty({ description: 'Is featured status' })
   @Expose()
   is_featured: boolean;
 
-  @ApiProperty({ description: 'Company information' })
-  @Expose()
-  company: {
-    id: string;
-    name: string;
-  };
-
-  @ApiProperty({ description: 'Created at' })
   @Expose()
   created_at: Date;
 
-  @ApiProperty({ description: 'Updated at' })
   @Expose()
   updated_at: Date;
 }

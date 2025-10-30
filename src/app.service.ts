@@ -123,7 +123,7 @@ export class AppService {
           password: hashedPassword,
           full_name: 'Administrator',
           phone_number: '+84 354 625 886',
-          role_id: rootRole?.id, // ✅ Dùng rootRole đã lưu ở trên
+          role_id: rootRole?.id,
           json_permission: permissions.map(p => p.permission_id),
           is_active: true,
           is_root: true,

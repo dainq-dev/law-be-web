@@ -20,10 +20,7 @@ export class PublicBlogsController {
   async findAll(
     @Query() query: PaginationDto & { 
       search?: string; 
-      category_id?: string; 
-      is_featured?: boolean; 
-      show_on_homepage?: boolean;
-      field?: string;
+      is_featured?: boolean;
     },
   ) {
     return this.publicBlogsService.findAll(query);
@@ -34,13 +31,6 @@ export class PublicBlogsController {
   @ApiResponse({ status: 200, type: [BlogResponseDto] })
   async getFeaturedBlogs(@Query('limit') limit?: number) {
     return this.publicBlogsService.getFeaturedBlogs(limit);
-  }
-
-  @Get('homepage')
-  @ApiOperation({ summary: 'Lấy danh sách bài viết cho trang chủ' })
-  @ApiResponse({ status: 200, type: [BlogResponseDto] })
-  async getHomepageBlogs(@Query('limit') limit?: number) {
-    return this.publicBlogsService.getHomepageBlogs(limit);
   }
 
   @Get('slug/:slug')
@@ -57,16 +47,5 @@ export class PublicBlogsController {
     return this.publicBlogsService.findOne(id);
   }
 
-  @Get('categories/list')
-  @ApiOperation({ summary: 'Lấy danh sách danh mục công khai' })
-  async findAllCategories(@Query() query: PaginationDto & { search?: string }) {
-    return this.publicBlogsService.findAllCategories(query);
-  }
-
-  // Engagement endpoints (public)
-  @Get(':id/view')
-  @ApiOperation({ summary: 'Tăng lượt xem bài viết' })
-  async incrementViewCount(@Param('id') id: string) {
-    return this.publicBlogsService.incrementViewCount(id);
-  }
+  // incrementViewCount removed - view_count field doesn't exist in entity
 }

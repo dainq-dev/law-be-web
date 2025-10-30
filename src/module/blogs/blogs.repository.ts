@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { BlogEntity, CategoryEntity, PostBlockEntity } from '@shared/entities';
+import { BlogEntity, PostBlockEntity } from '@shared/entities';
 import { PaginationOptions } from '@shared/utilities/pagination';
 
 @Injectable()
@@ -9,8 +9,6 @@ export class BlogsRepository {
   constructor(
     @InjectRepository(BlogEntity)
     private readonly blogRepository: Repository<BlogEntity>,
-    @InjectRepository(CategoryEntity)
-    private readonly categoryRepository: Repository<CategoryEntity>,
     @InjectRepository(PostBlockEntity)
     private readonly postBlockRepository: Repository<PostBlockEntity>,
   ) {}
@@ -24,12 +22,19 @@ export class BlogsRepository {
   async findById(id: string): Promise<BlogEntity | null> {
     return this.blogRepository.findOne({
       where: { id },
-      relations: ['category', 'author', 'postBlocks'],
+      relations: ['postBlocks'],
+    });
+  }
+
+  async findBySlug(slug: string): Promise<BlogEntity | null> {
+    return this.blogRepository.findOne({
+      where: { slug },
+      relations: ['postBlocks'],
     });
   }
 
   async findAll(
-    options: PaginationOptions & { search?: string; category_id?: string; is_featured?: boolean; show_on_homepage?: boolean },
+    options: PaginationOptions & { search?: string; is_featured?: boolean },
   ): Promise<{
     data: BlogEntity[];
     total: number;
@@ -39,33 +44,19 @@ export class BlogsRepository {
 
     const queryBuilder = this.blogRepository
       .createQueryBuilder('blog')
-      .leftJoinAndSelect('blog.category', 'category')
-      .leftJoinAndSelect('blog.author', 'author')
       .leftJoinAndSelect('blog.postBlocks', 'postBlocks')
       .orderBy('blog.created_at', 'DESC');
 
     if (options.search) {
       queryBuilder.andWhere(
-        '(blog.title ILIKE :search OR blog.excerpt ILIKE :search OR blog.meta_title ILIKE :search OR blog.meta_description ILIKE :search)',
+        '(blog.title_vi ILIKE :search OR blog.title_en ILIKE :search OR blog.title_zh ILIKE :search OR blog.excerpt_vi ILIKE :search OR blog.excerpt_en ILIKE :search OR blog.excerpt_zh ILIKE :search OR blog.description_vi ILIKE :search OR blog.description_en ILIKE :search OR blog.description_zh ILIKE :search)',
         { search: `%${options.search}%` },
       );
-    }
-
-    if (options.category_id) {
-      queryBuilder.andWhere('blog.category_id = :category_id', {
-        category_id: options.category_id,
-      });
     }
 
     if (options.is_featured !== undefined) {
       queryBuilder.andWhere('blog.is_featured = :is_featured', {
         is_featured: options.is_featured,
-      });
-    }
-
-    if (options.show_on_homepage !== undefined) {
-      queryBuilder.andWhere('blog.show_on_homepage = :show_on_homepage', {
-        show_on_homepage: options.show_on_homepage,
       });
     }
 
@@ -86,64 +77,7 @@ export class BlogsRepository {
     await this.blogRepository.softDelete(id);
   }
 
-  // Category methods
-  async createCategory(categoryData: Partial<CategoryEntity>): Promise<CategoryEntity> {
-    const category = this.categoryRepository.create(categoryData);
-    return this.categoryRepository.save(category);
-  }
-
-  async findCategoryById(id: string): Promise<CategoryEntity | null> {
-    return this.categoryRepository.findOne({
-      where: { id },
-      relations: ['blogs'],
-    });
-  }
-
-  async findCategoryByName(name: string): Promise<CategoryEntity | null> {
-    return this.categoryRepository.findOne({
-      where: { name },
-      relations: ['blogs'],
-    });
-  }
-
-  async findAllCategories(
-    options: PaginationOptions & { search?: string },
-  ): Promise<{
-    data: CategoryEntity[];
-    total: number;
-  }> {
-    const page = options.page || 1;
-    const limit = options.limit || 10;
-
-    const queryBuilder = this.categoryRepository
-      .createQueryBuilder('category')
-      .orderBy('category.created_at', 'ASC');
-
-    if (options.search) {
-      queryBuilder.andWhere('category.name ILIKE :search', {
-        search: `%${options.search}%`,
-      });
-    }
-
-    queryBuilder
-      .skip((page - 1) * limit)
-      .take(limit);
-
-    const [data, total] = await queryBuilder.getManyAndCount();
-    return { data, total };
-  }
-
-  async updateCategory(
-    id: string,
-    categoryData: Partial<CategoryEntity>,
-  ): Promise<CategoryEntity | null> {
-    await this.categoryRepository.update(id, categoryData);
-    return this.findCategoryById(id);
-  }
-
-  async deleteCategory(id: string): Promise<void> {
-    await this.categoryRepository.softDelete(id);
-  }
+  // Category methods removed - CategoryEntity doesn't exist
 
   // Post Block methods
   async createPostBlock(postBlockData: Partial<PostBlockEntity>): Promise<PostBlockEntity> {
@@ -166,25 +100,11 @@ export class BlogsRepository {
   // Featured blogs methods
   async findFeaturedBlogs(limit: number = 5): Promise<BlogEntity[]> {
     return this.blogRepository.find({
-      where: { is_featured: true, status: 'published' },
-      relations: ['category', 'author', 'postBlocks'],
+      where: { is_featured: true },
+      relations: ['postBlocks'],
       order: { created_at: 'DESC' },
       take: limit,
     });
-  }
-
-  async findHomepageBlogs(limit: number = 10): Promise<BlogEntity[]> {
-    return this.blogRepository.find({
-      where: { show_on_homepage: true, status: 'published' },
-      relations: ['category', 'author', 'postBlocks'],
-      order: { created_at: 'DESC' },
-      take: limit,
-    });
-  }
-
-  // Update view count
-  async incrementViewCount(id: string): Promise<void> {
-    await this.blogRepository.increment({ id }, 'view_count', 1);
   }
 
   // Update like count

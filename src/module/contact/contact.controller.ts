@@ -1,29 +1,55 @@
+import { Controller, Get, Post, Body, Param, Patch, Delete, Req } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ContactService } from './contact.service';
-import { PaginationDto } from '@shared/dto/pagination.dto';
 import { Public } from '../auth/decorators/public.decorator';
-import { CreateContactDto, ContactResponseDto, } from './dto';
-import { Controller, Get, Post, Body, Query, Req, UsePipes, ValidationPipe, UseFilters } from '@nestjs/common';
+import { CreateContactDto, ContactResponseDto, UpdateContactDto } from './dto';
 
+@ApiTags('Contact')
 @Controller('contact')
 export class ContactController {
   constructor(private readonly contactService: ContactService) {}
 
   @Post()
   @Public()
+  @ApiOperation({ summary: 'Tạo liên hệ mới' })
+  @ApiResponse({ status: 201, description: 'Contact created successfully' })
   async create(
     @Body() createContactDto: CreateContactDto,
     @Req() req: any,
-  ): Promise<any> {
+  ): Promise<string> {
     const ipAddress = req.ip || req.connection?.remoteAddress;
     const userAgent = req.headers['user-agent'];
     return this.contactService.create(createContactDto, ipAddress, userAgent);
   }
   
   @Get()
-  @Public()
-  async findAll( ): Promise<any[]> {
-    console.log("🚀 ~ ContactController ~ findAll ~ findAll:")
+  @ApiOperation({ summary: 'Lấy danh sách liên hệ' })
+  @ApiResponse({ status: 200, type: [ContactResponseDto] })
+  async findAll(): Promise<ContactResponseDto[]> {
     return this.contactService.findAll();
   }
-}
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Lấy chi tiết liên hệ' })
+  @ApiResponse({ status: 200, type: ContactResponseDto })
+  async findOne(@Param('id') id: string): Promise<ContactResponseDto> {
+    return this.contactService.findOne(id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Cập nhật liên hệ' })
+  @ApiResponse({ status: 200, type: ContactResponseDto })
+  async update(
+    @Param('id') id: string,
+    @Body() updateContactDto: UpdateContactDto,
+  ): Promise<ContactResponseDto> {
+    return this.contactService.update(id, updateContactDto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Xóa liên hệ' })
+  @ApiResponse({ status: 200, description: 'Contact deleted successfully' })
+  async remove(@Param('id') id: string): Promise<{ message: string }> {
+    return this.contactService.remove(id);
+  }
+}

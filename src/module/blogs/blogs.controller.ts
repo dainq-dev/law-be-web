@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
   Req,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { BlogsService } from './blogs.service';
@@ -16,11 +17,9 @@ import {
   CreateBlogDto,
   UpdateBlogDto,
   BlogResponseDto,
-  CreateCategoryDto,
-  UpdateCategoryDto,
+  UpdateStatusDto,
 } from './dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Public } from '@module/auth/decorators/public.decorator';
 
 @Controller('blogs')
@@ -31,8 +30,8 @@ export class BlogsController {
   @Public()
   @ApiOperation({ summary: 'Tạo bài viết mới' })
   @ApiResponse({ status: 201, type: BlogResponseDto })
-  async create(@Body() createBlogDto: CreateBlogDto, @Req() req: any): Promise<BlogResponseDto> {
-    return this.blogsService.create(createBlogDto, req.user.sub);
+  async create(@Body() createBlogDto: CreateBlogDto): Promise<BlogResponseDto> {
+    return this.blogsService.create(createBlogDto);
   }
   
   @Get()
@@ -41,54 +40,21 @@ export class BlogsController {
   async findAll(
     @Query() query: PaginationDto & { 
       search?: string; 
-      category_id?: string; 
-      is_featured?: boolean; 
-      show_on_homepage?: boolean;
+      is_featured?: boolean;
     },
   ) {
     return this.blogsService.findAll(query);
   }
   
-  // Category endpoints - moved before @Get(':id') to avoid route conflict
-  @Post('categories')
+  @Get('slug/:slug')
   @Public()
-  @ApiOperation({ summary: 'Tạo danh mục mới' })
-  async createCategory(@Body() createCategoryDto: CreateCategoryDto) {
-    return this.blogsService.createCategory(createCategoryDto);
+  @ApiOperation({ summary: 'Lấy chi tiết bài viết theo slug' })
+  @ApiResponse({ status: 200, type: BlogResponseDto })
+  async findOneBySlug(@Param('slug') slug: string): Promise<BlogResponseDto> {
+    return this.blogsService.findOneBySlug(slug);
   }
 
-  @Get('categories')
-  @Public()
-  @ApiOperation({ summary: 'Lấy danh sách danh mục' })
-  async findAllCategories(@Query() query: PaginationDto & { search?: string }) {
-    return this.blogsService.findAllCategories(query);
-  }
-  
-  @Get('categories/:id')
-  @Public()
-  @ApiOperation({ summary: 'Lấy chi tiết danh mục' })
-  async findOneCategory(@Param('id') id: string) {
-    return this.blogsService.findOneCategory(id);
-  }
-  
-  @Patch('categories/:id')
-  @Public()
-  @ApiOperation({ summary: 'Cập nhật danh mục' })
-  async updateCategory(
-    @Param('id') id: string,
-    @Body() updateCategoryDto: UpdateCategoryDto,
-  ) {
-    return this.blogsService.updateCategory(id, updateCategoryDto);
-  }
-  
-  @Delete('categories/:id')
-  @Public()
-  @ApiOperation({ summary: 'Xóa danh mục' })
-  async removeCategory(@Param('id') id: string) {
-    return this.blogsService.removeCategory(id);
-  }
-  
-  // Featured and homepage blogs - moved before @Get(':id') to avoid route conflict
+  // Featured blogs - moved before @Get(':id') to avoid route conflict
   @Get('featured')
   @Public()
   @ApiOperation({ summary: 'Lấy danh sách bài viết nổi bật' })
@@ -97,21 +63,19 @@ export class BlogsController {
     return this.blogsService.getFeaturedBlogs(limit);
   }
   
-  @Get('homepage')
+  // Placeholder for categories endpoint to avoid conflicting with :id
+  @Get('categories')
   @Public()
-  @ApiOperation({ summary: 'Lấy danh sách bài viết cho trang chủ' })
-  @ApiResponse({ status: 200, type: [BlogResponseDto] })
-  async getHomepageBlogs(@Query('limit') limit?: number) {
-    return this.blogsService.getHomepageBlogs(limit);
+  @ApiOperation({ summary: 'Danh mục bài viết (tạm thời trống)' })
+  async getCategories(): Promise<{ data: any[]; message: string }> {
+    return { data: [], message: 'Categories not implemented' };
   }
   
-  // Blog CRUD endpoints - moved after specific routes to avoid conflicts
   @Get(':id')
   @Public()
   @ApiOperation({ summary: 'Lấy chi tiết bài viết' })
   @ApiResponse({ status: 200, type: BlogResponseDto })
-  async findOne(@Param('id') id: string): Promise<BlogResponseDto> {
-    console.log('❌ Route @Get(":id") is being called with id:', id);
+  async findOne(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string): Promise<BlogResponseDto> {
     return this.blogsService.findOne(id);
   }
   
@@ -120,7 +84,7 @@ export class BlogsController {
   @ApiOperation({ summary: 'Cập nhật bài viết' })
   @ApiResponse({ status: 200, type: BlogResponseDto })
   async update(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() updateBlogDto: UpdateBlogDto,
   ): Promise<BlogResponseDto> {
     return this.blogsService.update(id, updateBlogDto);
@@ -129,38 +93,31 @@ export class BlogsController {
   @Delete(':id')
   @Public()
   @ApiOperation({ summary: 'Xóa bài viết' })
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.blogsService.remove(id);
   }
   
   // Engagement endpoints
-  @Post(':id/view')
-  @Public()
-  @ApiOperation({ summary: 'Tăng lượt xem bài viết' })
-  async incrementViewCount(@Param('id') id: string) {
-    return this.blogsService.incrementViewCount(id);
-  }
-  
   @Post(':id/like')
   @Public()
   @ApiOperation({ summary: 'Tăng lượt thích bài viết' })
-  async incrementLikeCount(@Param('id') id: string) {
+  async incrementLikeCount(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.blogsService.incrementLikeCount(id);
   }
   
   @Delete(':id/like')
   @Public()
   @ApiOperation({ summary: 'Giảm lượt thích bài viết' })
-  async decrementLikeCount(@Param('id') id: string) {
+  async decrementLikeCount(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.blogsService.decrementLikeCount(id);
   }
-  
+
+  //update is_active status blog:  /:id/status
   @Patch(':id/status')
-  @ApiOperation({ summary: 'Toggle trạng thái active của bài viết' })
   @Public()
-  @ApiResponse({ status: 200, description: 'Toggle status thành công' })
-  async toggleActiveStatus(@Param('id') id: string) {
-    return this.blogsService.toggleActiveStatus(id);
+  @ApiOperation({ summary: 'Cập nhật trạng thái bài viết' })
+  async updateStatus(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+    return this.blogsService.updateStatus(id);
   }
 }
 

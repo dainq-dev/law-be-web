@@ -4,22 +4,22 @@ import { Transform } from 'class-transformer';
 
 export class LanguageQueryDto {
   @ApiProperty({
-    description: 'Language code for the response',
+    description: 'Language code for the response (vi, en, zh)',
     example: 'vi',
     required: false,
   })
   @IsString({ message: 'Language code must be a string' })
   @IsOptional()
-  language?: string;
+  language_code?: string;
 
   @ApiProperty({
-    description: 'Language ID for the response',
-    example: 'uuid-string',
+    description: 'Language (alias of language_code) for backward compatibility',
+    example: 'vi',
     required: false,
   })
-  @IsUUID('4', { message: 'Language ID must be a valid UUID' })
+  @IsString({ message: 'Language must be a string' })
   @IsOptional()
-  language_id?: string;
+  language?: string;
 }
 
 export class PaginationQueryDto extends LanguageQueryDto {

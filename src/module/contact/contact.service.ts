@@ -23,23 +23,20 @@ export class ContactService {
   ): Promise<string> {
     const contactData = {
       ...createContactDto,
-      status: 'pending',
       ip_address: ipAddress,
       user_agent: userAgent,
     };
-    console.log("🚀 ~ ContactService ~ create ~ contactData:", contactData)
     const contact = await this.contactRepository.create(contactData);
-    return 'Contact created successfully'
+    return 'Contact created successfully';
   }
 
   async findAll(
-  ): Promise<any[]> {
+  ): Promise<ContactResponseDto[]> {
     try {
       const result = await this.contactRepository.findAll();
-      console.log("🚀 ~ ContactService ~ findAll ~ result:", result)
-      return result
+      return result.map(contact => this.toContactResponseDto(contact));
     } catch (error) {
-      throw new BadRequestException(error.message)
+      throw new BadRequestException(error.message);
     }
   }
 
@@ -61,11 +58,6 @@ export class ContactService {
     }
 
     const updateData: any = { ...updateContactDto };
-
-    // Set responded_at if status is changed to completed
-    if (updateContactDto.status === 'completed' && contact.status !== 'completed') {
-      updateData.responded_at = new Date();
-    }
 
     const updatedContact = await this.contactRepository.update(id, updateData);
     if (!updatedContact) {

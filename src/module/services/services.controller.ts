@@ -18,7 +18,6 @@ import {
   CreateServiceDto,
   UpdateServiceDto,
   ServiceResponseDto,
-  CreateTranslationDto,
 } from './dto';
 import { PaginationOptions } from '@shared/utilities/pagination';
 import { Public } from '@module/auth/decorators/public.decorator';
@@ -123,100 +122,5 @@ export class ServicesController {
     return this.servicesService.remove(id);
   }
   
-  // Translation endpoints
-  @Post(':id/translations')
-  @Public()
-  @ApiOperation({ summary: 'Create translation for service' })
-  @ApiResponse({
-    status: 201,
-    description: 'Translation created successfully',
-  })
-  @ApiResponse({ status: 404, description: 'Service not found' })
-  async createTranslation(
-    @Param('id') serviceId: string,
-    @Body() translationData: CreateTranslationDto,
-  ): Promise<any> {
-    return this.servicesService.createTranslation(serviceId, translationData);
-  }
-
-  @Get(':id/translations')
-  @Public()
-  @ApiOperation({ summary: 'Get all translations for service' })
-  @ApiResponse({
-    status: 200,
-    description: 'Translations retrieved successfully',
-  })
-  @ApiResponse({ status: 404, description: 'Service not found' })
-  async getTranslations(@Param('id') serviceId: string): Promise<any[]> {
-    return this.servicesService.getTranslations(serviceId);
-  }
-
-  @Get(':id/translations/:languageCode')
-  @Public()
-  @ApiOperation({ summary: 'Get specific translation for service' })
-  @ApiResponse({
-    status: 200,
-    description: 'Translation retrieved successfully',
-  })
-  @ApiResponse({ status: 404, description: 'Translation not found' })
-  async getTranslation(
-    @Param('id') serviceId: string,
-    @Param('languageCode') languageCode: string,
-  ): Promise<any> {
-    return this.servicesService.getTranslation(serviceId, languageCode);
-  }
-
-  @Patch(':id/translations/:languageCode')
-  @Public()
-  @ApiOperation({ summary: 'Update translation for service' })
-  @ApiResponse({
-    status: 200,
-    description: 'Translation updated successfully',
-  })
-  @ApiResponse({ status: 404, description: 'Translation not found' })
-  async updateTranslation(
-    @Param('id') serviceId: string,
-    @Param('languageCode') languageCode: string,
-    @Body() translationData: any,
-  ): Promise<any> {
-    return this.servicesService.updateTranslation(serviceId, languageCode, translationData);
-  }
-
-  @Delete(':id/translations/:languageCode')
-  @Public()
-  @ApiOperation({ summary: 'Delete translation for service' })
-  @ApiResponse({
-    status: 200,
-    description: 'Translation deleted successfully',
-  })
-  @ApiResponse({ status: 404, description: 'Translation not found' })
-  async deleteTranslation(
-    @Param('id') serviceId: string,
-    @Param('languageCode') languageCode: string,
-  ): Promise<{ message: string }> {
-    return this.servicesService.deleteTranslation(serviceId, languageCode);
-  }
-
-  @Get('by-language/:languageCode')
-  @Public()
-  @ApiOperation({ summary: 'Get services by language with translations' })
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
-  @ApiQuery({ name: 'search', required: false, type: String })
-  @ApiResponse({
-    status: 200,
-    description: 'Services with translations retrieved successfully',
-  })
-  async getServicesByLanguage(
-    @Param('languageCode') languageCode: string,
-    @Query() options: PaginationOptions & { search?: string; },
-  ): Promise<{
-    data: ServiceResponseDto[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  }> {
-    return this.servicesService.getServicesByLanguage(languageCode, options);
-  }
+  // Translation endpoints removed - translations are now stored as columns in the main entity
 }

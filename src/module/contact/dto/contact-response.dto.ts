@@ -30,17 +30,13 @@ export class ContactResponseDto {
   @Expose()
   company?: string;
 
-  @ApiProperty()
-  @Expose()
-  status: string;
-
-  @ApiPropertyOptional()
-  @Expose()
-  admin_note?: string;
-
   @ApiPropertyOptional()
   @Expose()
   ip_address?: string;
+
+  @ApiPropertyOptional()
+  @Expose()
+  user_agent?: string;
 
   @ApiPropertyOptional()
   @Expose()

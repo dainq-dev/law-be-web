@@ -1,87 +1,71 @@
-import { IsString, IsOptional, IsUUID, IsDate, IsArray, IsBoolean, IsNumber, IsUrl, ValidateIf } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type, Transform } from 'class-transformer';
+import { IsString, IsOptional, IsDateString, IsBoolean, IsArray } from 'class-validator';
+import { CreatePostBlockDto } from './post-block.dto';
 
 export class CreateBlogDto {
-  @ApiProperty({ description: 'Tiêu đề bài viết' })
-  @IsString()
-  title: string;
-
-  @ApiProperty({ description: 'Slug của bài viết' })
-  @IsString()
-  slug: string;
-
-  @ApiPropertyOptional({ description: 'Mô tả ngắn' })
+  // Title - all languages optional in entity, but typically required
+  @IsString({ message: 'Title (VI) must be a string' })
   @IsOptional()
-  @IsString()
-  excerpt?: string;
+  title_vi?: string;
 
-  @ApiPropertyOptional({ description: 'Trạng thái bài viết', default: 'draft' })
+  @IsString({ message: 'Title (EN) must be a string' })
   @IsOptional()
-  @IsString()
+  title_en?: string;
+
+  @IsString({ message: 'Title (ZH) must be a string' })
+  @IsOptional()
+  title_zh?: string;
+
+  @IsString({ message: 'Slug must be a string' })
+  @IsOptional()
+  slug?: string;
+
+  // Excerpt - all languages optional
+  @IsString({ message: 'Excerpt (VI) must be a string' })
+  @IsOptional()
+  excerpt_vi?: string;
+
+  @IsString({ message: 'Excerpt (EN) must be a string' })
+  @IsOptional()
+  excerpt_en?: string;
+
+  @IsString({ message: 'Excerpt (ZH) must be a string' })
+  @IsOptional()
+  excerpt_zh?: string;
+
+  // Description - all languages optional
+  @IsString({ message: 'Description (VI) must be a string' })
+  @IsOptional()
+  description_vi?: string;
+
+  @IsString({ message: 'Description (EN) must be a string' })
+  @IsOptional()
+  description_en?: string;
+
+  @IsString({ message: 'Description (ZH) must be a string' })
+  @IsOptional()
+  description_zh?: string;
+
+  @IsString({ message: 'Status must be a string' })
+  @IsOptional()
   status?: string; // draft, published, archived
 
-  @ApiPropertyOptional({ description: 'Lĩnh vực của bài viết' })
+  @IsDateString({}, { message: 'Published at must be a valid date' })
   @IsOptional()
-  @IsString()
-  field?: string;
+  published_at?: string;
 
-  @ApiPropertyOptional({ description: 'Ngày xuất bản' })
+  @IsString({ message: 'Featured image URL must be a string' })
   @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  published_at?: Date;
-
-  // Featured Image fields
-  @ApiPropertyOptional({ description: 'URL hình ảnh đại diện' })
-  @IsOptional()
-  @IsUrl()
   featured_image_url?: string;
 
-  @ApiPropertyOptional({ description: 'Alt text cho hình ảnh đại diện' })
+  @IsString({ message: 'Featured image alt must be a string' })
   @IsOptional()
-  @IsString()
   featured_image_alt?: string;
 
-  // SEO fields
-  @ApiPropertyOptional({ description: 'Meta title cho SEO' })
+  @IsBoolean({ message: 'Is featured must be a boolean' })
   @IsOptional()
-  @IsString()
-  meta_title?: string;
-
-  @ApiPropertyOptional({ description: 'Meta description cho SEO' })
-  @IsOptional()
-  @IsString()
-  meta_description?: string;
-
-  @ApiPropertyOptional({ description: 'Open Graph image URL' })
-  @IsOptional()
-  @IsUrl()
-  og_image_url?: string;
-
-  @ApiPropertyOptional({ description: 'Social media metadata' })
-  @IsOptional()
-  social_media?: any;
-
-  // Display options
-  @ApiPropertyOptional({ description: 'Có phải bài viết nổi bật không' })
-  @IsOptional()
-  @IsBoolean()
   is_featured?: boolean;
 
-  @ApiPropertyOptional({ description: 'Hiển thị trên trang chủ' })
-  @IsOptional()
-  @IsBoolean()
-  show_on_homepage?: boolean;
-
-  @ApiPropertyOptional({ description: 'Thời gian đọc ước tính (phút)' })
-  @IsOptional()
-  @IsNumber()
-  reading_time_minutes?: number;
-
-  @ApiPropertyOptional({ description: 'Các khối nội dung', type: 'array' })
-  @IsOptional()
   @IsArray()
-  postBlocks?: any[];
+  @IsOptional()
+  postBlocks?: CreatePostBlockDto[];
 }
-

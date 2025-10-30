@@ -1,124 +1,80 @@
 import { IsString, IsOptional, IsNumber, IsBoolean, IsObject, IsUUID } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
 
 export class CreatePostBlockDto {
-  @ApiProperty({ description: 'Loại block', enum: ['text', 'heading', 'image', 'quote', 'list', 'video', 'code', 'divider'] })
-  @IsString()
+  @IsString({ message: 'Block type must be a string' })
   block_type: string;
 
-  @ApiProperty({ description: 'Nội dung block' })
-  @IsObject()
-  content: any;
-
-  @ApiProperty({ description: 'Thứ tự sắp xếp' })
-  @IsNumber()
-  order: number;
-
-  @ApiPropertyOptional({ description: 'Có phải block nổi bật không' })
+  // Content - all languages optional (as JSON objects)
+  @IsObject({ message: 'Content (VI) must be an object' })
   @IsOptional()
-  @IsBoolean()
+  content?: any;
+
+  @IsNumber({}, { message: 'Order must be a number' })
+  @IsOptional()
+  order?: number;
+
+  @IsBoolean({ message: 'Is featured must be a boolean' })
+  @IsOptional()
   is_featured?: boolean;
 
-  @ApiPropertyOptional({ description: 'Metadata bổ sung' })
+  @IsObject({ message: 'Metadata must be an object' })
   @IsOptional()
-  @IsObject()
   metadata?: any;
 
-  @ApiPropertyOptional({ description: 'CSS class tùy chỉnh' })
+  @IsString({ message: 'CSS class must be a string' })
   @IsOptional()
-  @IsString()
   css_class?: string;
 
-  @ApiPropertyOptional({ description: 'Style inline' })
+  @IsObject({ message: 'Style must be an object' })
   @IsOptional()
-  @IsObject()
   style?: any;
 
-  @ApiProperty({ description: 'ID bài viết' })
-  @IsUUID()
-  post_id: string;
+  @IsUUID('4', { message: 'Post ID must be a valid UUID' })
+  @IsOptional()
+  post_id?: string;
 }
 
 export class UpdatePostBlockDto {
-  @ApiPropertyOptional({ description: 'Loại block' })
+  @IsString({ message: 'Block type must be a string' })
   @IsOptional()
-  @IsString()
   block_type?: string;
 
-  @ApiPropertyOptional({ description: 'Nội dung block' })
+  // Content - all languages optional
+  @IsObject({ message: 'Content (VI) must be an object' })
   @IsOptional()
-  @IsObject()
   content?: any;
 
-  @ApiPropertyOptional({ description: 'Thứ tự sắp xếp' })
+  @IsNumber({}, { message: 'Order must be a number' })
   @IsOptional()
-  @IsNumber()
   order?: number;
 
-  @ApiPropertyOptional({ description: 'Có phải block nổi bật không' })
+  @IsBoolean({ message: 'Is featured must be a boolean' })
   @IsOptional()
-  @IsBoolean()
   is_featured?: boolean;
 
-  @ApiPropertyOptional({ description: 'Metadata bổ sung' })
+  @IsObject({ message: 'Metadata must be an object' })
   @IsOptional()
-  @IsObject()
   metadata?: any;
 
-  @ApiPropertyOptional({ description: 'CSS class tùy chỉnh' })
+  @IsString({ message: 'CSS class must be a string' })
   @IsOptional()
-  @IsString()
   css_class?: string;
 
-  @ApiPropertyOptional({ description: 'Style inline' })
+  @IsObject({ message: 'Style must be an object' })
   @IsOptional()
-  @IsObject()
   style?: any;
 }
 
 export class PostBlockResponseDto {
-  @ApiProperty()
-  @Expose()
   id: string;
-
-  @ApiProperty()
-  @Expose()
   block_type: string;
-
-  @ApiProperty()
-  @Expose()
-  content: any;
-
-  @ApiProperty()
-  @Expose()
+  content?: any;
   order: number;
-
-  @ApiPropertyOptional()
-  @Expose()
   is_featured?: boolean;
-
-  @ApiPropertyOptional()
-  @Expose()
   metadata?: any;
-
-  @ApiPropertyOptional()
-  @Expose()
   css_class?: string;
-
-  @ApiPropertyOptional()
-  @Expose()
   style?: any;
-
-  @ApiProperty()
-  @Expose()
   post_id: string;
-
-  @ApiProperty()
-  @Expose()
   created_at: Date;
-
-  @ApiProperty()
-  @Expose()
   updated_at: Date;
 }

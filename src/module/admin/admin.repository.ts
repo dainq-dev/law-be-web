@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Like } from 'typeorm';
+import { Repository } from 'typeorm';
 import { AdminEntity } from '@shared/entities/admin.entity';
 import { RoleEntity } from '@shared/entities/role.entity';
 import { PermissionEntity } from '@shared/entities/permission.entity';

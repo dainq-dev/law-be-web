@@ -79,7 +79,4 @@ export class AdminEntity extends BaseEntity {
 
   @Column({ type: 'boolean', default: false })
   is_first_account: boolean;
-
-  @OneToMany(() => BlogEntity, (blog) => blog.author)
-  blogs: BlogEntity[];
 }

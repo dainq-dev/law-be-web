@@ -5,7 +5,6 @@ import { BlogsService } from './blogs.service';
 import { BlogsRepository } from './blogs.repository';
 import {
   BlogEntity,
-  CategoryEntity,
   PostBlockEntity,
 } from '@shared/entities';
 import { UploadService } from '@shared/services/upload.service';
@@ -14,7 +13,6 @@ import { UploadService } from '@shared/services/upload.service';
   imports: [
     TypeOrmModule.forFeature([
       BlogEntity,
-      CategoryEntity,
       PostBlockEntity,
     ]),
   ],

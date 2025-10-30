@@ -1,46 +1,63 @@
-import { IsString, IsOptional, IsDate, IsUUID } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { IsString, IsOptional, IsDateString, IsUUID, IsNotEmpty } from 'class-validator';
 
 export class CreateCertificateDto {
-  @ApiProperty({ description: 'Tên chứng chỉ' })
-  @IsString()
-  name: string;
+  // Name - all languages required
+  @IsString({ message: 'Name (VI) must be a string' })
+  @IsNotEmpty({ message: 'Name (VI) is required' })
+  name_vi: string;
 
-  @ApiPropertyOptional({ description: 'Tổ chức cấp' })
+  @IsString({ message: 'Name (EN) must be a string' })
+  @IsNotEmpty({ message: 'Name (EN) is required' })
+  name_en: string;
+
+  @IsString({ message: 'Name (ZH) must be a string' })
+  @IsNotEmpty({ message: 'Name (ZH) is required' })
+  name_zh: string;
+
+  // Issuing organization - all languages optional
+  @IsString({ message: 'Issuing organization (VI) must be a string' })
   @IsOptional()
-  @IsString()
-  issuing_organization?: string;
+  issuing_organization_vi?: string;
 
-  @ApiPropertyOptional({ description: 'Ngày cấp' })
+  @IsString({ message: 'Issuing organization (EN) must be a string' })
   @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  issue_date?: Date;
+  issuing_organization_en?: string;
 
-  @ApiPropertyOptional({ description: 'Ngày hết hạn' })
+  @IsString({ message: 'Issuing organization (ZH) must be a string' })
   @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  expiration_date?: Date;
+  issuing_organization_zh?: string;
 
-  @ApiPropertyOptional({ description: 'Mã chứng chỉ' })
+  // Description - all languages optional
+  @IsString({ message: 'Description (VI) must be a string' })
+  @IsOptional()
+  description_vi?: string;
+
+  @IsString({ message: 'Description (EN) must be a string' })
+  @IsOptional()
+  description_en?: string;
+
+  @IsString({ message: 'Description (ZH) must be a string' })
+  @IsOptional()
+  description_zh?: string;
+
+  @IsOptional()
+  @IsDateString({}, { message: 'Issue date must be a valid date' })
+  issue_date?: string;
+
+  @IsOptional()
+  @IsDateString({}, { message: 'Expiration date must be a valid date' })
+  expiration_date?: string;
+
   @IsOptional()
   @IsString()
   credential_id?: string;
 
-  @ApiPropertyOptional({ description: 'URL xác thực chứng chỉ' })
   @IsOptional()
   @IsString()
   credential_url?: string;
 
-  @ApiPropertyOptional({ description: 'Mô tả' })
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @ApiProperty({ description: 'ID nhân sự' })
-  @IsUUID()
+  @IsUUID('4', { message: 'Human resource ID must be a valid UUID' })
+  @IsNotEmpty({ message: 'Human resource ID is required' })
   human_resource_id: string;
 }
 

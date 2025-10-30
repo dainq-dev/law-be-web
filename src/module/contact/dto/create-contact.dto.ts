@@ -1,12 +1,12 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsEmail } from 'class-validator';
 
 export class CreateContactDto {
-  @IsOptional()
   @IsString({ message: 'Full name must be a string' })
+  @IsNotEmpty({ message: 'Full name is required' })
   full_name: string;
   
-  @IsOptional()
-  @IsString({ message: 'Email must be a string' })
+  @IsEmail({}, { message: 'Email must be a valid email address' })
+  @IsNotEmpty({ message: 'Email is required' })
   email: string;
   
   @IsOptional()
@@ -17,8 +17,8 @@ export class CreateContactDto {
   @IsString({ message: 'Subject must be a string' })
   subject?: string;
   
-  @IsOptional()
   @IsString({ message: 'Message must be a string' })
+  @IsNotEmpty({ message: 'Message is required' })
   message: string;
   
   @IsOptional()

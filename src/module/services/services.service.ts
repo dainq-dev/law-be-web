@@ -22,26 +22,26 @@ export class ServicesService {
 
   // Service methods
   async create(createServiceDto: CreateServiceDto): Promise<ServiceResponseDto> {
-    const { translations, legal_fields, ...serviceData } = createServiceDto;
-    
-    // Convert legal_fields array to JSON string
-    const serviceDataWithLegalFields = {
-      ...serviceData,
-      sort_order: createServiceDto.sort_order || 0,
-      legal_fields: legal_fields ? JSON.stringify(legal_fields) : undefined,
+    // Convert legal_fields arrays to JSON strings
+    const serviceData: any = {
+      ...createServiceDto,
+      legal_fields_vi: createServiceDto.legal_fields_vi ? JSON.stringify(createServiceDto.legal_fields_vi) : null,
+      legal_fields_en: createServiceDto.legal_fields_en ? JSON.stringify(createServiceDto.legal_fields_en) : null,
+      legal_fields_zh: createServiceDto.legal_fields_zh ? JSON.stringify(createServiceDto.legal_fields_zh) : null,
+      is_active: createServiceDto.is_active ?? true,
     };
     
-    const service = await this.servicesRepository.create(serviceDataWithLegalFields);
-
-    // Create translations if provided
-    if (translations && translations.length > 0) {
-      await this.createTranslations(service.id, translations);
-    }
-
+    const service = await this.servicesRepository.create(serviceData);
     return this.toServiceResponseDto(service);
   }
 
-  async findAll(options: PaginationOptions & { search?: string; }): Promise<any> {
+  async findAll(options: PaginationOptions & { search?: string; }): Promise<{
+    data: ServiceResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
     const validatedOptions = {
       page: Math.max(1, options.page || 1),
       limit: Math.min(100, Math.max(1, options.limit || 10)),
@@ -49,9 +49,11 @@ export class ServicesService {
     };
 
     const result = await this.servicesRepository.findAll(validatedOptions);
-    console.log("🚀 ~ ServicesService ~ findAll ~ result:", result)
 
-    return result
+    return {
+      ...result,
+      data: result.data.map(service => this.toServiceResponseDto(service)),
+    };
   }
 
   async findOne(id: string): Promise<ServiceResponseDto> {
@@ -68,23 +70,33 @@ export class ServicesService {
       throw new NotFoundException('Service not found');
     }
 
-    const { translations, legal_fields, ...serviceData } = updateServiceDto;
-    
-    // Convert legal_fields array to JSON string if provided
-    const serviceDataWithLegalFields = {
-      ...serviceData,
-      ...(legal_fields && { legal_fields: JSON.stringify(legal_fields) }),
-    };
-    
-    const updatedService = await this.servicesRepository.update(id, serviceDataWithLegalFields);
-    
-    // Update translations if provided
-    if (translations && translations.length > 0) {
-      // Delete existing translations and create new ones
-      await this.servicesRepository.deleteTranslationsByServiceId(id);
-      await this.createTranslations(id, translations);
+    // Convert legal_fields arrays to JSON strings if provided and sanitize payload
+    const updateData: any = { ...updateServiceDto };
+    if (updateServiceDto.legal_fields_vi !== undefined) {
+      updateData.legal_fields_vi = updateServiceDto.legal_fields_vi ? JSON.stringify(updateServiceDto.legal_fields_vi) : null;
+    }
+    if (updateServiceDto.legal_fields_en !== undefined) {
+      updateData.legal_fields_en = updateServiceDto.legal_fields_en ? JSON.stringify(updateServiceDto.legal_fields_en) : null;
+    }
+    if (updateServiceDto.legal_fields_zh !== undefined) {
+      updateData.legal_fields_zh = updateServiceDto.legal_fields_zh ? JSON.stringify(updateServiceDto.legal_fields_zh) : null;
+    }
+    // Remove unknown fields that are not columns in ServiceEntity to avoid TypeORM errors
+    const allowedKeys: (keyof ServiceEntity)[] = [
+      'name_vi', 'name_en', 'name_zh',
+      'short_description_vi', 'short_description_en', 'short_description_zh',
+      'description_vi', 'description_en', 'description_zh',
+      'legal_fields_vi', 'legal_fields_en', 'legal_fields_zh',
+      'image_url', 'is_active', 'is_featured'
+    ];
+    const sanitizedUpdate: Partial<ServiceEntity> = {};
+    for (const key of allowedKeys) {
+      if (Object.prototype.hasOwnProperty.call(updateData, key)) {
+        sanitizedUpdate[key] = updateData[key];
+      }
     }
     
+    const updatedService = await this.servicesRepository.update(id, sanitizedUpdate);
     return this.toServiceResponseDto(updatedService);
   }
 
@@ -99,7 +111,8 @@ export class ServicesService {
   }
 
   async findFeatured(): Promise<ServiceResponseDto[]> {
-    return [];
+    const featuredServices = await this.servicesRepository.findFeatured();
+    return featuredServices.map(service => this.toServiceResponseDto(service));
   }
 
   async findByTags(tags: string[]): Promise<ServiceResponseDto[]> {
@@ -108,138 +121,19 @@ export class ServicesService {
 
   // Process step APIs removed as not part of the model
 
-  private async createTranslations(serviceId: string, translations: any[]): Promise<void> {
-    for (const translation of translations) {
-      await this.servicesRepository.createTranslation({
-        ...translation,
-        service_id: serviceId,
-      });
-    }
-  }
-
-  // Translation methods
-  async createTranslation(serviceId: string, translationData: any): Promise<any> {
-    const service = await this.servicesRepository.findById(serviceId);
-    if (!service) {
-      throw new NotFoundException('Service not found');
-    }
-
-    // Check if translation already exists for this language
-    const existingTranslation = await this.servicesRepository.findTranslationByServiceAndLanguage(
-      serviceId, 
-      translationData.language_code
-    );
-    
-    if (existingTranslation) {
-      throw new ConflictException('Translation already exists for this language');
-    }
-
-    const translation = await this.servicesRepository.createTranslation({
-      ...translationData,
-      service_id: serviceId,
-    });
-
-    return translation;
-  }
-
-  async getTranslations(serviceId: string): Promise<any[]> {
-    const service = await this.servicesRepository.findById(serviceId);
-    if (!service) {
-      throw new NotFoundException('Service not found');
-    }
-
-    return this.servicesRepository.findTranslationsByServiceId(serviceId);
-  }
-
-  async getTranslation(serviceId: string, languageCode: string): Promise<any> {
-    const translation = await this.servicesRepository.findTranslationByServiceAndLanguage(
-      serviceId, 
-      languageCode
-    );
-    
-    if (!translation) {
-      throw new NotFoundException('Translation not found');
-    }
-
-    return translation;
-  }
-
-  async updateTranslation(serviceId: string, languageCode: string, translationData: any): Promise<any> {
-    const translation = await this.servicesRepository.findTranslationByServiceAndLanguage(
-      serviceId, 
-      languageCode
-    );
-    
-    if (!translation) {
-      throw new NotFoundException('Translation not found');
-    }
-
-    return this.servicesRepository.updateTranslation(translation.id, translationData);
-  }
-
-  async deleteTranslation(serviceId: string, languageCode: string): Promise<{ message: string }> {
-    const translation = await this.servicesRepository.findTranslationByServiceAndLanguage(
-      serviceId, 
-      languageCode
-    );
-    
-    if (!translation) {
-      throw new NotFoundException('Translation not found');
-    }
-
-    await this.servicesRepository.deleteTranslation(translation.id);
-    return { message: 'Translation deleted successfully' };
-  }
-
-  async getServicesByLanguage(languageCode: string, options: PaginationOptions & { search?: string; }): Promise<{
-    data: ServiceResponseDto[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  }> {
-    const validatedOptions = {
-      page: Math.max(1, options.page || 1),
-      limit: Math.min(100, Math.max(1, options.limit || 10)),
-      search: options.search,
-    };
-
-    const result = await this.servicesRepository.findAllWithTranslations(languageCode, validatedOptions);
-
-    return {
-      ...result,
-      data: result.data.map(service => this.toServiceResponseDtoWithTranslations(service)),
-    };
-  }
+  // Translation methods removed - translations are now stored as columns in the main entity
 
   private toServiceResponseDto(service: ServiceEntity): ServiceResponseDto {
+    // Parse legal_fields from JSON strings to arrays for each language
     const response = plainToClass(ServiceResponseDto, service, {
       excludeExtraneousValues: true,
     });
     
-    // Parse legal_fields from JSON string to array
-    if (service.legal_fields) {
-      try {
-        response.legal_fields = JSON.parse(service.legal_fields);
-      } catch (error) {
-        response.legal_fields = [];
-      }
-    } else {
-      response.legal_fields = [];
-    }
+    // Legal fields are stored as JSON strings in entity, but we return them as-is (strings)
+    // If client needs arrays, they can parse them
+    // response already has legal_fields_vi, legal_fields_en, legal_fields_zh as strings
     
     return response;
   }
 
-  private toServiceResponseDtoWithTranslations(service: ServiceEntity): ServiceResponseDto {
-    const response = this.toServiceResponseDto(service);
-    
-    // Add translations if available
-    if (service.translations && service.translations.length > 0) {
-      (response as any).translations = service.translations;
-      (response as any).available_languages = service.translations.map(t => t.language_code);
-    }
-    
-    return response;
-  }
 }

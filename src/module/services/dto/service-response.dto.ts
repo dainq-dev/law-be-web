@@ -1,84 +1,57 @@
-import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 
 export class ServiceResponseDto {
-  @ApiProperty({ description: 'Service ID', example: 'uuid-string' })
   @Expose()
   id: string;
 
-  @ApiProperty({ description: 'Service name', example: 'Corporate Law Consultation' })
   @Expose()
-  name: string;
+  name_vi: string;
 
-  @ApiProperty({ description: 'Service description' })
   @Expose()
-  description: string;
+  name_en?: string;
 
-  @ApiProperty({ description: 'Short description' })
   @Expose()
-  short_description: string;
+  name_zh?: string;
 
-  @ApiProperty({ description: 'Icon URL' })
   @Expose()
-  icon_url: string;
+  short_description_vi?: string;
 
-  @ApiProperty({ description: 'Image URL' })
+  @Expose()
+  short_description_en?: string;
+
+  @Expose()
+  short_description_zh?: string;
+
+  @Expose()
+  description_vi?: string;
+
+  @Expose()
+  description_en?: string;
+
+  @Expose()
+  description_zh?: string;
+
+  @Expose()
+  legal_fields_vi?: string;
+
+  @Expose()
+  legal_fields_en?: string;
+
+  @Expose()
+  legal_fields_zh?: string;
+
   @Expose()
   image_url: string;
 
-  @ApiProperty({ description: 'Legal fields covered by this service' })
-  @Expose()
-  legal_fields: string[];
-
-  @ApiProperty({ description: 'Sort order' })
-  @Expose()
-  sort_order: number;
-
-  @ApiProperty({ description: 'Is active status' })
   @Expose()
   is_active: boolean;
 
-  @ApiProperty({ description: 'Is featured status' })
   @Expose()
   is_featured: boolean;
 
-  @ApiProperty({ description: 'Service tags' })
-  @Expose()
-  tags: string[];
-
-  @ApiProperty({ description: 'Process steps' })
-  @Expose()
-  process_steps: {
-    id: string;
-    title: string;
-    description: string;
-    step_order: number;
-  }[];
-
-  @ApiProperty({ description: 'Created at' })
   @Expose()
   created_at: Date;
 
-  @ApiProperty({ description: 'Updated at' })
   @Expose()
   updated_at: Date;
-
-  @ApiProperty({ description: 'Available translations', required: false })
-  @Expose()
-  translations?: {
-    id: string;
-    language_id: string;
-    language_code: string;
-    name: string;
-    short_description: string;
-    description: string;
-    category: string;
-    processing_time: string;
-    features: string;
-    requirements: string;
-  }[];
-
-  @ApiProperty({ description: 'Available language codes', required: false })
-  @Expose()
-  available_languages?: string[];
 }

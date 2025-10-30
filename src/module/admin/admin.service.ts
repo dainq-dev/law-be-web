@@ -28,7 +28,6 @@ import {
   HumanResourceEntity,
   ServiceEntity,
   BlogEntity,
-  CategoryEntity,
   ContactEntity,
 } from '@shared/entities';
 
@@ -43,8 +42,6 @@ export class AdminService {
     private readonly serviceRepository: Repository<ServiceEntity>,
     @InjectRepository(BlogEntity)
     private readonly blogRepository: Repository<BlogEntity>,
-    @InjectRepository(CategoryEntity)
-    private readonly categoryRepository: Repository<CategoryEntity>,
     @InjectRepository(ContactEntity)
     private readonly contactRepository: Repository<ContactEntity>,
   ) {}
@@ -270,100 +267,5 @@ export class AdminService {
     return plainToClass(AdminResponseDto, admin, {
       excludeExtraneousValues: true,
     });
-  }
-
-  // Dashboard methods
-  async getDashboardStats(): Promise<AdminDashboardStatsDto> {
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    const [
-      totalAdmins,
-      totalStaff,
-      totalServices,
-      totalBlogs,
-      totalCategories,
-      totalContacts,
-      pendingContacts,
-      newContactsWeek,
-    ] = await Promise.all([
-      this.adminRepository.countAdmins(),
-      this.humanResourceRepository.count(),
-      this.serviceRepository.count(),
-      this.blogRepository.count(),
-      this.categoryRepository.count(),
-      this.contactRepository.count(),
-      this.contactRepository.count({ where: { status: 'pending' } }),
-      this.contactRepository.count({
-        where: {
-          created_at: MoreThan(sevenDaysAgo),
-        },
-      }),
-    ]);
-
-    return {
-      total_admins: totalAdmins,
-      total_staff: totalStaff,
-      total_services: totalServices,
-      total_blogs: totalBlogs,
-      total_categories: totalCategories,
-      total_contacts: totalContacts,
-      pending_contacts: pendingContacts,
-      new_contacts_week: newContactsWeek,
-    };
-  }
-
-  async getDashboardData(): Promise<AdminDashboardDataDto> {
-    const [stats, recentContacts, recentBlogs] = await Promise.all([
-      this.getDashboardStats(),
-      this.getRecentContacts(),
-      this.getRecentBlogs(),
-    ]);
-
-    return {
-      stats,
-      recent_activities: [], // TODO: Implement activity tracking
-      recent_contacts: recentContacts,
-      recent_blogs: recentBlogs,
-    };
-  }
-
-  private async getRecentContacts(): Promise<any[]> {
-    const contacts = await this.contactRepository.find({
-      take: 10,
-      order: { created_at: 'DESC' },
-    });
-
-    return contacts.map(contact => ({
-      id: contact.id,
-      full_name: contact.full_name,
-      email: contact.email,
-      phone_number: contact.phone_number,
-      subject: contact.subject,
-      status: contact.status,
-      created_at: contact.created_at,
-    }));
-  }
-
-  private async getRecentBlogs(): Promise<any[]> {
-    const blogs = await this.blogRepository.find({
-      relations: ['category', 'author'],
-      take: 10,
-      order: { created_at: 'DESC' },
-    });
-
-    return blogs.map(blog => ({
-      id: blog.id,
-      title: blog.title,
-      status: blog.status,
-      published_at: blog.published_at,
-      category: blog.category,
-      author: blog.author ? {
-        id: blog.author.id,
-        user_email: blog.author.user_email,
-        full_name: blog.author.full_name,
-      } : null,
-      created_at: blog.created_at,
-    }));
   }
 }

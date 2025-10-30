@@ -10,7 +10,6 @@ import {
   HumanResourceEntity,
   ServiceEntity,
   BlogEntity,
-  CategoryEntity,
   ContactEntity,
 } from '@shared/entities';
 import { PasswordService } from '@shared/utilities/password';
@@ -24,7 +23,6 @@ import { PasswordService } from '@shared/utilities/password';
       HumanResourceEntity,
       ServiceEntity,
       BlogEntity,
-      CategoryEntity,
       ContactEntity,
     ]),
   ],

@@ -5,14 +5,12 @@ import { PublicBlogsService } from './public-blogs.service';
 import { PublicBlogsRepository } from './public-blogs.repository';
 import {
   BlogEntity,
-  CategoryEntity,
 } from '@shared/entities';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       BlogEntity,
-      CategoryEntity,
     ]),
   ],
   controllers: [PublicBlogsController],

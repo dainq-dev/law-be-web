@@ -21,10 +21,6 @@ export abstract class BaseEntity {
   @DeleteDateColumn({ type: 'timestamptz' })
   deleted_at?: Date;
 
-  @VersionColumn({ default: 0 })
-  @Exclude()
-  __v?: number;
-
   @Column({
     name: 'is_active',
     type: 'boolean',
