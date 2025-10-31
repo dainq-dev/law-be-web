@@ -155,7 +155,6 @@ export class HomepageService {
       }),
     ]);
 
-    console.log("🚀 ~ HomepageService ~ getHomepageStats ~ totalBlogPosts:", totalBlogPosts)
     return {
       total_human_resources: totalHumanResources,
       total_services: totalServices,

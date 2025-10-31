@@ -77,7 +77,6 @@ export class BlogsService {
     };
 
     const result = await this.blogsRepository.findAll(validatedOptions);
-    console.log("🚀 ~ BlogsService ~ findAll ~ result:", JSON.stringify(result.data, null, 2))
 
     return {
       data: result.data,

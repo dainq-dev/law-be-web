@@ -9,15 +9,15 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { WebConfigService } from './web-config.service';
 import {
   CreateWebConfigDto,
   UpdateWebConfigDto,
   WebConfigResponseDto,
 } from './dto';
+import { UpsertWebConfigItemDto } from './dto/upsert-web-config.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Public } from '@module/auth/decorators/public.decorator';
 
 @Controller('web-config')
@@ -87,6 +87,16 @@ export class WebConfigController {
   @ApiOperation({ summary: 'Xóa config' })
   async remove(@Param('id') id: string) {
     return this.webConfigService.remove(id);
+  }
+
+  @Post('create-or-update')
+  @Public()
+  @ApiOperation({ summary: 'Tạo mới hoặc cập nhật nhiều config theo key+screen' })
+  @ApiBody({ type: UpsertWebConfigItemDto, isArray: true })
+  async createOrUpdate(
+    @Body() items: UpsertWebConfigItemDto[],
+  ): Promise<WebConfigResponseDto[]> {
+    return this.webConfigService.createOrUpdateMany(items);
   }
 }
 

@@ -42,7 +42,6 @@ export class AuthController {
     description: 'Invalid credentials',
   })
   async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
-    console.log("🚀 ~ AuthController ~ login ~ loginDto:", loginDto)
     return this.authService.login(loginDto);
   }
 

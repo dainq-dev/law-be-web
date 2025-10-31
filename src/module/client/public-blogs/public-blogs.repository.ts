@@ -75,7 +75,6 @@ export class PublicBlogsRepository {
     .where('blog.slug = :slug', { slug });
 
     const blog = await queryBuilder.getOne();
-    console.log("🚀 ~ PublicBlogsRepository ~ findBySlug ~ blog:", JSON.stringify(blog, null, 2))
     return blog;
   }
 

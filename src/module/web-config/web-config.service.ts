@@ -11,6 +11,7 @@ import {
   UpdateWebConfigDto,
   WebConfigResponseDto,
 } from './dto';
+import { UpsertWebConfigItemDto } from './dto/upsert-web-config.dto';
 import { WebConfigEntity } from '@shared/entities';
 
 @Injectable()
@@ -116,6 +117,31 @@ export class WebConfigService {
 
     await this.webConfigRepository.delete(id);
     return { message: 'Config deleted successfully' };
+  }
+
+  async createOrUpdateMany(items: UpsertWebConfigItemDto[]): Promise<WebConfigResponseDto[]> {
+    const results: WebConfigResponseDto[] = [];
+    for (const item of items) {
+      const targetScreen = item.screen;
+      const newValue = item.content ?? item.value;
+
+      const existing = await this.webConfigRepository.findByKey(item.key, targetScreen);
+      if (existing) {
+        const updated = await this.webConfigRepository.update(existing.id, {
+          value: newValue ?? existing.value,
+          screen: targetScreen ?? existing.screen,
+        });
+        results.push(this.toWebConfigResponseDto(updated!));
+      } else {
+        const created = await this.webConfigRepository.create({
+          key: item.key,
+          value: newValue ?? '',
+          screen: targetScreen,
+        });
+        results.push(this.toWebConfigResponseDto(created));
+      }
+    }
+    return results;
   }
 
   private toWebConfigResponseDto(config: WebConfigEntity): WebConfigResponseDto {
