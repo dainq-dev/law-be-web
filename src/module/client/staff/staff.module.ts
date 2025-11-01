@@ -6,12 +6,14 @@ import {
 import { PublicStaffController } from './staff.controller';
 import { PublicStaffService } from './staff.service';
 import { PublicStaffRepository } from './staff.repository';
+import { CommonModule } from '../common/common.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       HumanResourceEntity
     ]),
+    CommonModule,
   ],
   controllers: [PublicStaffController],
   providers: [PublicStaffService, PublicStaffRepository],

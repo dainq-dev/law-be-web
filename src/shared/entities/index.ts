@@ -30,3 +30,6 @@ export { ContactEntity } from './contact.entity';
 
 // Attachments
 export { AttachmentsEntity } from './attachments.entity';
+
+// OTP
+export { OtpEntity } from './otp.entity';

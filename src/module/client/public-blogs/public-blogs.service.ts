@@ -1,16 +1,34 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { BlogResponseDto } from '../../blogs/dto/blog-response.dto';
 import { PaginationDto } from '@shared/dto/pagination.dto';
 import { PublicBlogsRepository } from './public-blogs.repository';
+import { CommonRepository } from '../common/common.repository';
 
 @Injectable()
 export class PublicBlogsService {
-  constructor(private readonly publicBlogsRepository: PublicBlogsRepository) {}
+  constructor(
+    private readonly publicBlogsRepository: PublicBlogsRepository,
+    private readonly commonRepository: CommonRepository,
+  ) {}
+
+  /**
+   * Check website enabled trước khi thực hiện các thao tác
+   */
+  private async checkWebsiteEnabled(): Promise<void> {
+    const isEnabled = await this.commonRepository.isWebsiteEnabled();
+    if (!isEnabled) {
+      throw new ServiceUnavailableException(
+        'Website is currently disabled. Please contact the administrator.',
+      );
+    }
+  }
 
   async findAll(query: PaginationDto & { 
     search?: string; 
     is_featured?: boolean;
   }) {
+    await this.checkWebsiteEnabled();
+    
     // Chỉ lấy các bài viết đã published
     const filters = {
       ...query,
@@ -25,6 +43,8 @@ export class PublicBlogsService {
   }
 
   async findOne(id: string): Promise<BlogResponseDto> {
+    await this.checkWebsiteEnabled();
+    
     const blog = await this.publicBlogsRepository.findOne(id);
     if (!blog) {
       throw new NotFoundException('Bài viết không tồn tại');
@@ -33,6 +53,8 @@ export class PublicBlogsService {
   }
 
   async findBySlug(slug: string): Promise<BlogResponseDto> {
+    await this.checkWebsiteEnabled();
+    
     const blog = await this.publicBlogsRepository.findBySlug(slug);
     
     if (!blog) {
@@ -42,6 +64,7 @@ export class PublicBlogsService {
   }
 
   async getFeaturedBlogs(limit?: number) {
+    await this.checkWebsiteEnabled();
     const blogs = await this.publicBlogsRepository.getFeaturedBlogs(limit);
     return blogs.map(blog => this.transformBlogForClient(blog));
   }

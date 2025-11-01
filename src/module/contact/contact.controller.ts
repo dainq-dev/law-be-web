@@ -35,21 +35,4 @@ export class ContactController {
   async findOne(@Param('id') id: string): Promise<ContactResponseDto> {
     return this.contactService.findOne(id);
   }
-
-  @Patch(':id')
-  @ApiOperation({ summary: 'Cập nhật liên hệ' })
-  @ApiResponse({ status: 200, type: ContactResponseDto })
-  async update(
-    @Param('id') id: string,
-    @Body() updateContactDto: UpdateContactDto,
-  ): Promise<ContactResponseDto> {
-    return this.contactService.update(id, updateContactDto);
-  }
-
-  @Delete(':id')
-  @ApiOperation({ summary: 'Xóa liên hệ' })
-  @ApiResponse({ status: 200, description: 'Contact deleted successfully' })
-  async remove(@Param('id') id: string): Promise<{ message: string }> {
-    return this.contactService.remove(id);
-  }
 }

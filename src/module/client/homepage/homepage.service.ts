@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { plainToClass } from 'class-transformer';
@@ -9,6 +9,7 @@ import {
   WebConfigEntity,
 } from '@shared/entities';
 import { HomepageStatsDto, HomepageDataDto, CompanyInfoDto } from './dto';
+import { CommonRepository } from '../common/common.repository';
 
 @Injectable()
 export class HomepageService {
@@ -21,9 +22,25 @@ export class HomepageService {
     private readonly blogRepository: Repository<BlogEntity>,
     @InjectRepository(WebConfigEntity)
     private readonly webConfigRepository: Repository<WebConfigEntity>,
+    private readonly commonRepository: CommonRepository,
   ) {}
 
+  /**
+   * Check website enabled trước khi thực hiện các thao tác
+   */
+  private async checkWebsiteEnabled(): Promise<void> {
+    const isEnabled = await this.commonRepository.isWebsiteEnabled();
+    console.log("🚀 ~ HomepageService ~ checkWebsiteEnabled ~ isEnabled:", isEnabled)
+    if (!isEnabled) {
+      throw new ServiceUnavailableException(
+        'Website is currently disabled. Please contact the administrator.',
+      );
+    }
+  }
+
   async getHomepageData(): Promise<any> {
+    await this.checkWebsiteEnabled();
+    
     const [
       staff,
       services,
@@ -139,6 +156,8 @@ export class HomepageService {
   }
 
   async getHomepageStats(): Promise<HomepageStatsDto> {
+    await this.checkWebsiteEnabled();
+    
     const [totalHumanResources, totalServices, totalBlogPosts] = await Promise.all([
       this.humanResourceRepository.count({ where: { is_active: true } }),
       this.serviceRepository.count({ where: { is_active: true } }),
@@ -167,6 +186,8 @@ export class HomepageService {
   }
 
   async getConfigByScreen(key: string): Promise<any> {
+    await this.checkWebsiteEnabled();
+    
     const config = await this.webConfigRepository.find({
       where: { screen: key},
       select: ['key', 'value'],
@@ -176,6 +197,7 @@ export class HomepageService {
 
 
   async getServices(): Promise<any> {
+    await this.checkWebsiteEnabled();
     const services = await this.serviceRepository.find({
       where: { is_active: true, is_featured: true },
       select: [

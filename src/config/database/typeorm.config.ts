@@ -17,6 +17,7 @@ import {
   WebConfigEntity,
   ContactEntity,
   AttachmentsEntity,
+  OtpEntity,
 } from '../../shared/entities';
 
 export const AppDataSource: DataSourceOptions = {
@@ -36,7 +37,7 @@ export const AppDataSource: DataSourceOptions = {
     AdminEntity, RoleEntity, PermissionEntity, HumanResourceEntity, EducationEntity,
     ExperienceEntity, CertificateEntity, BlogEntity, PostBlockEntity,
     ServiceEntity, LanguageEntity, AttachmentsEntity,
-    WebConfigEntity, ContactEntity, 
+    WebConfigEntity, ContactEntity, OtpEntity,
   ],
   migrations: ['dist/migrations/*{.ts,.js}'],
   synchronize: true,

@@ -8,6 +8,7 @@ import {
   BlogEntity,
   WebConfigEntity,
 } from '@shared/entities';
+import { CommonModule } from '../common/common.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import {
       BlogEntity,
       WebConfigEntity,
     ]),
+    CommonModule,
   ],
   controllers: [HomepageController],
   providers: [HomepageService],

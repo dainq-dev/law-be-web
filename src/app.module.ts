@@ -23,6 +23,7 @@ import { SmartLoggerService } from '@shared/logging/smart-logger.service';
 import { LoggingConfigService } from '@shared/logging/logging-config.service';
 import { PerformanceMonitorService } from '@shared/services/performance-monitor.service';
 import { PublicStaffModule } from '@module/client/staff/staff.module';
+import { CommonModule } from '@module/client/common/common.module';
 import { AppService } from './app.service';
 
 @Module({
@@ -41,6 +42,7 @@ import { AppService } from './app.service';
     HomepageModule,
     PublicBlogsModule,
     PublicStaffModule,
+    CommonModule,
     AttachmentsModule,
   ],
   controllers: [MainController],
