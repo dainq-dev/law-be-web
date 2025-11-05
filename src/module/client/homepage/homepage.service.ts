@@ -7,6 +7,7 @@ import {
   ServiceEntity,
   BlogEntity,
   WebConfigEntity,
+  ContactEntity,
 } from '@shared/entities';
 import { HomepageStatsDto, HomepageDataDto, CompanyInfoDto } from './dto';
 import { CommonRepository } from '../common/common.repository';
@@ -23,6 +24,8 @@ export class HomepageService {
     @InjectRepository(WebConfigEntity)
     private readonly webConfigRepository: Repository<WebConfigEntity>,
     private readonly commonRepository: CommonRepository,
+    @InjectRepository(ContactEntity)
+    private readonly contactRepository: Repository<ContactEntity>,
   ) {}
 
   /**
@@ -158,30 +161,19 @@ export class HomepageService {
   async getHomepageStats(): Promise<HomepageStatsDto> {
     await this.checkWebsiteEnabled();
     
-    const [totalHumanResources, totalServices, totalBlogPosts] = await Promise.all([
+    const [totalHumanResources, totalServices, totalBlogPosts, totalContacts] = await Promise.all([
       this.humanResourceRepository.count({ where: { is_active: true } }),
       this.serviceRepository.count({ where: { is_active: true } }),
       this.blogRepository.count(),
+      this.contactRepository.count(),
     ]);
-
-    // Get success_rate and client_satisfaction from web config
-    const [successRateConfig, clientSatisfactionConfig] = await Promise.all([
-      this.webConfigRepository.findOne({
-        where: { key: 'success_rate' },
-      }),
-      this.webConfigRepository.findOne({
-        where: { key: 'client_satisfaction' },
-      }),
-    ]);
+    
 
     return {
       total_human_resources: totalHumanResources,
       total_services: totalServices,
       total_blog_posts: totalBlogPosts,
-      success_rate: successRateConfig ? parseFloat(successRateConfig.value) : 95,
-      client_satisfaction: clientSatisfactionConfig
-        ? parseFloat(clientSatisfactionConfig.value)
-        : 98,
+      total_contacts: totalContacts,
     };
   }
 

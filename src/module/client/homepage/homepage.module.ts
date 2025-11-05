@@ -7,6 +7,7 @@ import {
   ServiceEntity,
   BlogEntity,
   WebConfigEntity,
+  ContactEntity,
 } from '@shared/entities';
 import { CommonModule } from '../common/common.module';
 
@@ -17,6 +18,7 @@ import { CommonModule } from '../common/common.module';
       ServiceEntity,
       BlogEntity,
       WebConfigEntity,
+      ContactEntity,
     ]),
     CommonModule,
   ],

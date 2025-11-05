@@ -17,18 +17,11 @@ export class HomepageStatsDto {
   total_services: number;
 
   @ApiProperty({
-    description: 'Tỉ lệ thành công (%)',
-    example: 95,
+    description: 'Tổng số liên hệ',
+    example: 10,
   })
   @Expose()
-  success_rate: number;
-
-  @ApiProperty({
-    description: 'Độ hài lòng khách hàng (%)',
-    example: 98,
-  })
-  @Expose()
-  client_satisfaction: number;
+  total_contacts: number;
 
   @ApiProperty({
     description: 'Tổng số bài viết',
