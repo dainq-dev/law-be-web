@@ -114,18 +114,91 @@ export class EnhancedRequestLoggerMiddleware implements NestMiddleware {
 
     // Log errors with more detail
     if (isError) {
-      this.logger.error('💥 API Error', undefined, {
+      // Extract error details from response body
+      const errorDetails = this.extractErrorDetails(body, statusCode);
+      
+      // Format error message for logging
+      const errorMessage = errorDetails.message || `HTTP ${statusCode} Error`;
+      const errorStack = errorDetails.stack || undefined;
+      
+      // Create comprehensive error log object
+      const errorLog = {
         requestId,
         method,
         url,
         statusCode,
         duration: `${duration}ms`,
         errorType: this.getErrorType(statusCode),
-        type: 'api_error'
-      });
+        type: 'api_error',
+        errorMessage: errorDetails.message,
+        errorCode: errorDetails.code,
+        errorField: errorDetails.field,
+        errorDetails: errorDetails.details,
+        fullErrorBody: JSON.stringify(body, null, 2),
+        timestamp: new Date().toISOString(),
+      };
+
+      // Log error with stack trace if available
+      this.logger.error(`💥 API Error: ${errorMessage}`, errorStack, errorLog);
     }
 
     return originalMethod.call(res, body);
+  }
+
+  private extractErrorDetails(body: any, statusCode: number): {
+    message?: string;
+    code?: string;
+    field?: string;
+    details?: string;
+    stack?: string;
+  } {
+    if (!body) {
+      return { message: `HTTP ${statusCode} Error` };
+    }
+
+    // Handle different error response formats
+    // Format 1: { message: "...", statusCode: ..., error: "..." }
+    if (body.message) {
+      return {
+        message: body.message,
+        code: body.code || body.statusCode?.toString(),
+        field: body.field,
+        details: body.details || body.error,
+        stack: body.stack,
+      };
+    }
+
+    // Format 2: { error: { message: "...", code: "..." } }
+    if (body.error && typeof body.error === 'object') {
+      return {
+        message: body.error.message || body.error.code || 'Unknown error',
+        code: body.error.code,
+        field: body.error.field,
+        details: body.error.details,
+        stack: body.error.stack,
+      };
+    }
+
+    // Format 3: { success: false, error: { message: "...", code: "..." } }
+    if (body.success === false && body.error) {
+      return {
+        message: body.error.message || body.error.code || 'Unknown error',
+        code: body.error.code,
+        field: body.error.field,
+        details: body.error.details,
+      };
+    }
+
+    // Format 4: String error
+    if (typeof body === 'string') {
+      return { message: body };
+    }
+
+    // Fallback: stringify the entire body
+    return {
+      message: `HTTP ${statusCode} Error`,
+      details: JSON.stringify(body, null, 2),
+    };
   }
 
   private getClientIp(req: any): string {

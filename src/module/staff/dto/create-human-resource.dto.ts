@@ -1,5 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsOptional, IsUUID, IsBoolean, IsDateString, IsEmail, IsInt, Min, Max } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsBoolean, IsDateString, IsEmail } from 'class-validator';
 
 export class CreateHumanResourceDto {
   @IsString({ message: 'Full name (VI) must be a string' })

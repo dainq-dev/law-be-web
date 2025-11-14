@@ -191,7 +191,7 @@ export class HomepageService {
   async getServices(): Promise<any> {
     await this.checkWebsiteEnabled();
     const services = await this.serviceRepository.find({
-      where: { is_active: true, is_featured: true },
+      where: { is_active: true},
       select: [
         'id',
         'name_vi',

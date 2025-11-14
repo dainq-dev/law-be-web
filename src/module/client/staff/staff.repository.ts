@@ -13,7 +13,9 @@ export class PublicStaffRepository {
   async findAll() {
     const queryBuilder = this.createBaseQuery();
     queryBuilder.orderBy('human_resources.created_at', 'DESC');
-    const staffs = await queryBuilder.getMany();
+    const staffs = await queryBuilder
+    .where('human_resources.is_active = true')
+    .getMany();
     return staffs;
   }
 

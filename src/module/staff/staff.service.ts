@@ -31,7 +31,8 @@ export class HumanResourcesService {
 
   // Human Resource methods
   async create(createHumanResourceDto: CreateHumanResourceDto): Promise<HumanResourceResponseDto> {
-    // Check if email already exists
+    try {
+      // Check if email already exists
     const existingHumanResource = await this.humanResourcesRepository.findByEmail(
       createHumanResourceDto.email
     );
@@ -46,7 +47,11 @@ export class HumanResourcesService {
       date_of_birth: createHumanResourceDto.date_of_birth ? new Date(createHumanResourceDto.date_of_birth) : undefined,
     });
 
-    return this.toHumanResourceResponseDto(humanResource);
+    return this.toHumanResourceResponseDto(humanResource);  
+    } catch (error) {
+      console.error('Error creating human resource:', error);
+      throw new BadRequestException('Failed to create human resource');
+    }
   }
 
   async findAll(options: PaginationQueryDto & { search?: string }): Promise<{
